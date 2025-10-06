@@ -1,0 +1,17 @@
+<Project>
+ <PropertyGroup>
+   <MetaplaySDKPath>$(MSBuildThisFileDirectory)../MetaplaySDK</MetaplaySDKPath>
+   <SharedCodePath>$(MSBuildThisFileDirectory)../Assets/Code/GameLogic</SharedCodePath>
+   <MetaplayClientPath>$(MetaplaySDKPath)/Client</MetaplayClientPath>
+   <MetaplayServerPath>$(MetaplaySDKPath)/Backend</MetaplayServerPath>
+ </PropertyGroup>
+ <!-- Potential parent directory overrides -->
+ <Import Condition="Exists('../../Directory.Build.props')" Project="../../Directory.Build.props" />
+ <!-- Make paths relative to project -->
+ <PropertyGroup>
+   <SharedCodePath>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(SharedCodePath)))</SharedCodePath>
+   <MetaplayClientPath>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(MetaplayClientPath)))</MetaplayClientPath>
+   <MetaplayServerPath>$([MSBuild]::MakeRelative($(MSBuildProjectDirectory), $(MetaplayServerPath)))</MetaplayServerPath>
+ </PropertyGroup>
+
+</Project>

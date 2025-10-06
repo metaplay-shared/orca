@@ -1,0 +1,11 @@
+
+Bot:
+  MaxBots:                  1
+  SpawnRate:                10
+  ExpectedSessionDuration:  00:30:00
+  #ForceConflictingPlayerId: true
+
+  # Server overrides (uncomment to use)
+  #ServerHost: orca-develop.p1.metaplay.io, EnableTls: true
+  # Or:
+  # dotnet run --Bot:ServerHost=orca-develop.p1.metaplay.io --Bot:EnableTls=true

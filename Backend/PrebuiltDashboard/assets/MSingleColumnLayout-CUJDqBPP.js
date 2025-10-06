@@ -1,0 +1,1 @@
+import{a as t,m as o,o as a,a7 as s,bg as n}from"./index-DAyiym1a.js";const r={key:0,class:"tw-mx-auto tw-w-full tw-max-w-3xl"};function l(e,m){return e.$slots.default?(a(),t("div",r,[s(e.$slots,"default")])):o("",!0)}const c={},d=n(c,[["render",l]]);export{d as M};

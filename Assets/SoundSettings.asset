@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddb91c3d44784949aa8cbf3191d9e26c, type: 3}
+  m_Name: SoundSettings
+  m_EditorClassIdentifier: 
+  ItemSelectionSound: {fileID: 0}
+  ItemMergeSound: {fileID: 8300000, guid: c4222531786f37048a1ecd4132e0a06e, type: 3}
+  ItemSpawnSound: {fileID: 8300000, guid: 391b0176a0c44944c89b1b6e3b1301b4, type: 3}
+  RewardCelebration: {fileID: 8300000, guid: 841b14144d8114b309be86d013a83820, type: 3}
+  FlightHit: {fileID: 8300000, guid: 3aac630b6c39c4638b277f19d5d8b0c8, type: 3}
+  InventoryItemFlightHit: {fileID: 8300000, guid: 2989b8d19ff9744d8a2ed3431d1a1df1, type: 3}
+  MergeBoardCloudOpened: {fileID: 8300000, guid: a3778905dad9b458186a964f6cd9f8b5, type: 3}
+  ButtonClicked: {fileID: 8300000, guid: f27000bde9bcc48039818348e44ec102, type: 3}
+  EnterIsland: {fileID: 0}
+  DialogueOpen: {fileID: 8300000, guid: 220fffa6083af4089a6b3b5c13b2c20b, type: 3}
+  IslandMusic: {fileID: 8300000, guid: 2d9448718ae9145ccb5271978aabdf47, type: 3}
+  MapMusic: {fileID: 8300000, guid: 6c3c4c31715724ca88f7f7497fd131f6, type: 3}

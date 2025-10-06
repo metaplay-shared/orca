@@ -1,0 +1,4 @@
+packages:
+  - Backend/Dashboard
+  - MetaplaySDK/Frontend/*
+  - GameWebsite

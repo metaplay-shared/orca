@@ -1,0 +1,14 @@
+$schema: MetaplaySDK/projectConfigSchema.json
+projectID: project-orca
+buildRootDir: .
+sdkRootDir: MetaplaySDK
+backendDir: Backend
+sharedCodeDir: Assets/Code/GameLogic
+unityProjectDir: .
+dotnetRuntimeVersion: '9.0'
+serverChartVersion: 0.9.0
+botClientChartVersion: 0.4.2
+features:
+  dashboard:
+    useCustom: true
+    rootDir: Backend/Dashboard

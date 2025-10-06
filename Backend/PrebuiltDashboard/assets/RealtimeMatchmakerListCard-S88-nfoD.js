@@ -1,0 +1,1 @@
+import{r as t,e as a,o as r,bg as s}from"./index-DAyiym1a.js";function c(o,i){const e=t("meta-list-card");return r(),a(e,{itemList:[],title:"Real-Time Matchmakers",emptyMessage:"No real-time matchmakers to list!","data-testid":"realtime-matchmakers-list-card"})}const m={},l=s(m,[["render",c]]);export{l as default};

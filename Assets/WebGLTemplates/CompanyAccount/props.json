@@ -1,0 +1,19 @@
+{
+    "playerWidth": "{{{ WIDTH }}}",
+    "playerHeight": "{{{ HEIGHT }}}",
+    "loaderUrl": "Build/{{{ LOADER_FILENAME }}}",
+    "dataUrl": "Build/{{{ DATA_FILENAME }}}",
+    "frameworkUrl": "Build/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+    "codeUrl": "Build/{{{ CODE_FILENAME }}}",
+#endif
+#if MEMORY_FILENAME
+    "memoryUrl": "Build/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+    "symbolsUrl": "Build/{{{ SYMBOLS_FILENAME }}}",
+#endif
+    "companyName": {{{ JSON.stringify(COMPANY_NAME) }}},
+    "productName": {{{ JSON.stringify(PRODUCT_NAME) }}},
+    "productVersion": {{{ JSON.stringify(PRODUCT_VERSION) }}}
+}
