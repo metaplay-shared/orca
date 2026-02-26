@@ -36,11 +36,16 @@ def main():
 
         logger.info("Metaplay SDK initialized successfully")
 
-    logger.info("Applying patches")
-
     # Apply patches
-    for patch in glob.glob("patches/*.patch"):
-        subprocess.run(["git", "apply", patch])
+    patches = glob.glob("patches/*.patch")
+    if patches:
+        logger.info("Applying patches")
+        for patch in patches:
+            result = subprocess.run(["git", "apply", patch])
+            if result.returncode != 0:
+                logger.warning(f"Failed to apply patch: {patch}")
+    else:
+        logger.info("No patches to apply")
 
 if __name__ == "__main__":
     main()
