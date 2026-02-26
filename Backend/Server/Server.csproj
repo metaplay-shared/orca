@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Version>0.1.0.0</Version>
+    <LangVersion>Latest</LangVersion>
+    <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+    <StartWorkingDirectory>.</StartWorkingDirectory>
+    <ExternalConsole>true</ExternalConsole>
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MetaplayServerPath)\CodeAnalyzers\Metaplay.CodeAnalyzers.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Analyzer</OutputItemType>
+    </ProjectReference>
+    <ProjectReference Include="$(MetaplayServerPath)\CodeAnalyzers.Shared\Metaplay.CodeAnalyzers.Shared.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Analyzer</OutputItemType>
+    </ProjectReference>
+    <ProjectReference Include="..\SharedCode\SharedCode.csproj" />
+    <ProjectReference Include="$(MetaplayServerPath)\Server\Metaplay.Server.csproj" />
+  </ItemGroup>
+</Project>

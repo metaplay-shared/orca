@@ -1,0 +1,11 @@
+{
+  "name": "com.skunkworksgames.utilites.buildpipeline",
+  "displayName": "Build Pipeline Utilities",
+  "version": "1.0.0",
+  "unity": "2021.2",
+  "description": "",
+  "keywords": [],
+  "author": {
+    "name": "Skunkworks"
+  }
+}

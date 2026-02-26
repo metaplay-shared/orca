@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(SharedCodePath)\**\*.cs" LinkBase="SharedCode" />
+    <Compile Update="..\..\Assets\Code\GameLogic\Config\PlayerSegmentInfo.cs">
+      <Link>SharedCode\Config\PlayerSegmentInfo.cs</Link>
+    </Compile>
+    <Compile Update="..\..\Assets\Code\GameLogic\Player\PlayerMessages.cs">
+      <Link>SharedCode\Player\PlayerMessages.cs</Link>
+    </Compile>
+    <Compile Update="..\..\Assets\Code\GameLogic\Player\MetaActions\PlayerForceChecksumMismatch.cs">
+      <LinkBase>SharedCode\</LinkBase>
+      <Link>SharedCode\Player\MetaActions\PlayerForceChecksumMismatch.cs</Link>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MetaplayServerPath)\CodeAnalyzers\Metaplay.CodeAnalyzers.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Analyzer</OutputItemType>
+    </ProjectReference>
+      <ProjectReference Include="$(MetaplayServerPath)\CodeAnalyzers.Shared\Metaplay.CodeAnalyzers.Shared.csproj">
+          <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+          <OutputItemType>Analyzer</OutputItemType>
+      </ProjectReference>
+    <ProjectReference Include="$(MetaplayServerPath)\Cloud\Metaplay.Cloud.csproj" />
+  </ItemGroup>
+</Project>

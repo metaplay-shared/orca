@@ -1,0 +1,503 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Item Chains
+  m_EditorClassIdentifier: 
+  m_GroupName: Item Chains
+  m_GUID: 2700f93e175c4f34197130450dccdf8e
+  m_SerializeEntries:
+  - m_GUID: 00ff6452477eb487f97ae5d177100d25
+    m_Address: Chains/OrangePie
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 01bbe2fc2601b4fec8b64ad57fef2bb4
+    m_Address: Chains/StoneRubble
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 052a2d354c8df7b488ef8fdd04cd5aee
+    m_Address: Chains/Lemon
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 09d800485c4cc9849b74d1b3f9a1622c
+    m_Address: Chains/LogChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0bbcac0909c37461d930a8052c1a24e2
+    m_Address: Chains/Tool
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0dc62a2db67994eb78cb126f313a5b5c
+    m_Address: Chains/OrangeTree
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ebf026c7b9ab4a44b3d15231fd0640d
+    m_Address: Chains/HeroFisher
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 168001cf8c07948afac4c08a1fcabaad
+    m_Address: Chains/LogPile
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 16b24c2177f704f5eb0ff0acdb5cbeef
+    m_Address: Chains/Gem
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 175c19133bef8480fa3a73c2dc79fe89
+    m_Address: Chains/TreeStump
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1e0a4f2f6753845a78c54a59ad278a85
+    m_Address: Chains/Clay
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2271d3095b5984ba681f7075b834163d
+    m_Address: Chains/FlowerCreatorMedium
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2315a38c8179142a5a68e7e0f7cf68c6
+    m_Address: Chains/BioFuel
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23bef7eee1e424cba9a29a5004697132
+    m_Address: Chains/Bush
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 27a5b456f9e6e40a98a31466ed1096da
+    m_Address: Chains/AutumnChestPremium
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28095b1ade2ec4260b5c54c1cebecc11
+    m_Address: Chains/AutumnChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d1488f53b1c1413abbcfc8bfda686a3
+    m_Address: Chains/WildcardLow
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d452678c0a554f5eb5458b8daaa9ae6
+    m_Address: Chains/OrangePack
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2e5d86fcad37b4c29ae22f36db9c9df9
+    m_Address: Chains/HeroBarista
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 31f59327c02c0484582e4c7ff287186f
+    m_Address: Chains/VaseCreator
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 333ce71177cfc409ea077d6346166151
+    m_Address: Chains/Autumn
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3cc6548c23bce49fd82c0a8e89fa1bc3
+    m_Address: Chains/FuelCrate
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3dce6f876ddc4704e86aa0eb0d081db1
+    m_Address: Chains/LogCreatorLarge
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4255a8ca76df341458adbaed91042d8a
+    m_Address: Chains/CafeOrca
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4aa729e8c4507458181489a599a66396
+    m_Address: Chains/WitheredOrangeTree
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b0d2cab5f0bc4a9a91937418ae79536
+    m_Address: Chains/Gold
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b4ea800f729a48648754c73ab755acb
+    m_Address: Chains/HeroInventor
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4bd8993bb83f24b49bd57def5424f4b4
+    m_Address: Chains/BerryBush
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4dc2433a2c81242828403d88b0687973
+    m_Address: Chains/Water
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4e6bbeaf125064b1b82fc0787e583d8e
+    m_Address: Chains/FlowerChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52c0fabe93bf94c33bd862cf412a048a
+    m_Address: Chains/LogHouseSite
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bb4cc579aace40f9b96556d83de4f02
+    m_Address: Chains/FlowerMine
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60b7954a737734245a73d80c9bf53548
+    m_Address: Chains/WindTurbine
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 644b0c2811c8f41119c931cb51375f6b
+    m_Address: Chains/IslandRewards
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 67ba2eb7c351341a3b954f26ac9763de
+    m_Address: Chains/StoneMine
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6916266c92c6948e492ec9b1afe3ba99
+    m_Address: Chains/RewardChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6befdf506b2c945f59258d4db32b9fe5
+    m_Address: Chains/HeroChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6ed905dd8eefb48a19756134d9400d6d
+    m_Address: Chains/FlowerCreatorSmall
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73044b130d4a8443489c036992f89ec9
+    m_Address: Chains/StoneCreatorSmall
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 765b9d281ccd94267b4a57af87b0c353
+    m_Address: Chains/Dock
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 76b59ab8078fc4ff5a5c2d426d9915cd
+    m_Address: Chains/OrangeJuice
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 77dd09b3cbef14570937ce2e3327a651
+    m_Address: Chains/Energy
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79a243421b9dc4a7297480b23a125c85
+    m_Address: Chains/Vase
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b18390a4dc01cd409cae2b3fd0b420b
+    m_Address: Chains/LogCreatorSmall
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7bcc173abe8574248b01018e19caca77
+    m_Address: Chains/Berry
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c063d6becf4f469ea43e5b7b566dfce
+    m_Address: Chains/WateringCan
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e7e324c1ceb244079ba5e4ba4cd1f20
+    m_Address: Chains/ToolBox
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 80d4d282e7d394852957fad81b8027ec
+    m_Address: Chains/StoneChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 848bb5b936d8f4e99bf5f9d27389603b
+    m_Address: Chains/Leaves
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86137a9b199674391a39c3b0928fed96
+    m_Address: Chains/StoneHouse
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 87f41ffc51d07e14fb27ea1b84776c55
+    m_Address: Chains/LogMine
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8e0f43ead5971494f9511d461d5a9dac
+    m_Address: Chains/Gloves
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94012c89126a64bf085370b5126d6010
+    m_Address: Chains/SailingChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9502e5770d0594f94a71dfb47f98dd58
+    m_Address: Chains/HeroRanger
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9583a99551d8f48f888e4d84899b763f
+    m_Address: Chains/OrangeSalad
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 95c8db25cb27b42b58ce999fed8ecfcf
+    m_Address: Chains/Workshop
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9b9283b8c0cac4e57a990bd087dae6f8
+    m_Address: Chains/StoneHouseSite
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5dbd0a3a18a954498e49d996b2e69b7
+    m_Address: Chains/Lighthouse
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a8fcd1b245aa640ba885494c1ee73051
+    m_Address: Chains/StoneCreatorMedium
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac856465b68ff4906ba02913ed477a05
+    m_Address: Chains/LevelUpRewards
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b75a654526d44466294b2c1cab340aa9
+    m_Address: Chains/Orange
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8226100ab5304b8484428fdc9b8ba6c
+    m_Address: Chains/BronzeBuilder
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bc9a1f576123c49d88993e5cb5ae1520
+    m_Address: Chains/CuteBugs
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c264c00b864f744b3929681a975e4215
+    m_Address: Chains/GardeningTool
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce62864e4c8c0401cb1373ee6d69024e
+    m_Address: Chains/IslandToken
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d223691fc61064262861d83fd15f009e
+    m_Address: Chains/WildcardHigh
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2e5ae0bfda614ca4959899a630c2577
+    m_Address: Chains/StoneCreatorLarge
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d34165d6d6a4340769c6634c215fffd1
+    m_Address: Chains/SmallSailingChest
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d4f2a94ed917945399f7b403c15e9241
+    m_Address: Chains/GardeningToolStorage
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d7c6a068ba0614c8fb13df4e15e8f244
+    m_Address: Chains/PremiumWindTurbine
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dee9e456dd41d694ab967b7817e52e4f
+    m_Address: Chains/LemonTree
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dfe150fb42b21413ea181920e5be70de
+    m_Address: Chains/Plant
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e3dae2cecc06c4ddb89337984dc704ec
+    m_Address: Chains/FlowerHouse
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e4467271404fb4cbdbbcc6cb08beff7b
+    m_Address: Chains/BioCanister
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e8e67788d4bac4ee5b24bb3fd6622176
+    m_Address: Chains/Honey
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f19e2398826be4d7ab25c035cbf045e6
+    m_Address: Chains/FlowerCreatorLarge
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f8da7face4a884c87b31ee562b00acd8
+    m_Address: Chains/GardeningGloves
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fb56bf30d44614949997f3f2e6a2d594
+    m_Address: Chains/LogHouse
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fbbd7fd3db90c4fe0b5bea1919ee7102
+    m_Address: Chains/FlowerHouseSite
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff5f467b1fecc514f818ba186ccce1fd
+    m_Address: Chains/LogCreatorMedium
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Chains
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 1
+  m_Settings: {fileID: 11400000, guid: 850e678c9fd794b7199ad2a93bbb975a, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 4139683a00e504b4b9f6ad772b3b5b32, type: 2}
+    - {fileID: 11400000, guid: 3d35a016dbc4c76449ded7f8b239f1f5, type: 2}

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <RunWorkingDirectory>$(MSBuildProjectDirectory)</RunWorkingDirectory>
+    <StartWorkingDirectory>.</StartWorkingDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SharedCode\SharedCode.csproj" />
+  </ItemGroup>
+
+</Project>
