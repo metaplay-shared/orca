@@ -1,0 +1,12 @@
+# Node.js dependencies.
+node_modules
+
+# Compiled output.
+dist
+
+# Playwright test output folder.
+test-results
+
+# Cypress test folders. No longer in use but easier to keep in ignore to prevent junk files.
+core_tests
+cypress

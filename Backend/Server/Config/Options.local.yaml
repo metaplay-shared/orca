@@ -1,0 +1,14 @@
+### Option overrides when running server locally
+
+AdminApi:
+  Type: none
+  NoneConfiguration:
+    DefaultRole: game-admin
+    AllowAssumeRoles: true
+
+Player:
+  DebugConfig:
+    ClientConsistencyChecks: true
+    ServerConsistencyChecks: false
+    ChecksumGranularity: PerActionSingleTickPerFrame
+  ForceFullDebugConfigForBots: true
