@@ -32,7 +32,7 @@ When put all together, Orca is a great real-life example of how to both leverage
 
 We recommend starting with the [live demo](https://mtply.co/trydemomenu) of Orca to get a feel for how the game plays and what the Metaplay admin tools look like for this project.
 
-Next, have a look at the [Orca Architecture Overview](https://docs.metaplay.io/introduction/orca/) page in our technical documentation, which gives key context on how Orca was built and the main components of the project.
+Next, have a look at the [Orca Architecture Overview](https://docs.metaplay.io/introduction/samples/orca/orca-arch.html) page in our technical documentation, which gives key context on how Orca was built and the main components of the project.
 
 Because the source code is public, you can also use third-party AI tools like your favorite coding agents or DeepWiki to [quickly deep dive into the technical implementation](https://deepwiki.com/metaplay-shared/orca).
 
