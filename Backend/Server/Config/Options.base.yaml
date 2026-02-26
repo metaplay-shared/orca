@@ -1,0 +1,18 @@
+Database:
+  MasterVersion: 1
+Matchmaker:
+  MmrBucketCount: 30
+  PlayerCacheSize: 1000
+Player:
+  DebugConfig:
+    ClientConsistencyChecks: true
+    ServerConsistencyChecks: false
+    ChecksumGranularity: PerOperation
+  ForceFullDebugConfigForBots: false
+Leagues:
+  SeasonCycleStartDate: '2020-01-01 00:00:00Z'
+  SeasonCycleRecurrence: 1d
+  SeasonCycleRestPeriod: 2h
+  SeasonCycleEndingSoonPeriod: 4h
+  DivisionMaxParticipantCount: 20
+  DivisionDesiredParticipantCount: 10
