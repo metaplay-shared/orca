@@ -1,141 +1,54 @@
-# SDKs in the project
- - Facebook Unity SDK 11.0.0
+# Orca
 
-## Working with the MetaplaySDK dashboard
-First of all see the documentation provided by Metaplay
-* [Implementing MetaRewards](https://www.notion.so/Implementing-MetaRewards-7f9a5a93e98646099e5ce520ed34c482)
-* [Getting Started with Customizing the LiveOps Dashboard](https://www.notion.so/Getting-Started-with-Customizing-the-LiveOps-Dashboard-5b39f8c32f754fe8993921c8ffd54e9e)
-* [Customizing the LiveOps Dashboard Frontend](https://www.notion.so/Customizing-the-LiveOps-Dashboard-Frontend-6cf210b0aecf425880c213ceccbcb837)
+Orca is a story-driven merge-2 game, where players explore 7 different islands by merging items and constructing buildings, and meet 4 different heroes. Each island and hero has its own set of missions to earn rewards and level up your heroes. It is a version of the Secret Shores mobile free-to-play game owned by [Zaibatsu Interactive](https://zaibatsu.fi/) and modified by us to serve as a [live demo of Metaplay](https://mtply.co/trydemomenu).
 
-### Installing the required tools (OSX)
-```sh
-# Install nvm (Node Version Manager)
-brew install nvm
-```
-Add `nvm` to your path. For example, if using bash append the following lines to your `~/.bashrc`
-```sh
-export NVM_DIR=~/.nvm
-. $(brew --prefix nvm)/nvm.sh
-```
-Then set up npm. At the time of writing (4th July 2022):
-```
-nvm install 16
-nvm use v16.15.1
-```
-### Building and running
-Then in `<Project Orca>/MetaplaySDK/Backend/Dashboard`
-```
-# Install the project
-npm ci
-# To run the dashboard locally during development run
-npm run serve
-# ...and then browse to localhost:5551. Note that you need
-# to have the server running (see "Running from Rider" below).
+<!-- ![Orca screenshot](./images/orca.png) -->
 
-# To build the dashboard (to be able to access it by simply running the server from within Rider)
-npm run build
-```
+We loved how the team behind Secret Shores used Metaplay to build a very solid technical foundation for their game, and worked together with Zaibatsu to open-source the code to the wider developer community. It is a great reference of how to structure a live-service game regardless of the genre you might be working on, and we are excited to see what you will build with it.
 
-### Running Metaplay server from Rider
-The results of `npm run build` can be committed to the repository to allow
-other developers to get the changes made to the dashboard.
-That is, one can run the Metaplay server from Rider
-* Open Orca-Server solution in Rider
-* Run the server by clicking "Run" in the upper right corner of the IDE
-* Access the dashboard in `localhost:5550` (**notice the port!**).
+## Key Takeaways
 
-To get the client to connect to the locally running server when run from Unity:
-* In Unity, open `Assets/Scenes/Start`
-* Right-click `Application Manager` and selet `Properties`
-* Change `Active Environment` to `Localhost`
+Orca demonstrates how Metaplay's architecture enables you to build a data-driven, live-service game where designers control progression and content without code changes.
 
-## Building game configs
-The game configs can be built (locally) by opening the Unity project and
-clicking menu items under `Config Builder` menu.
+### About Metaplay's Architecture in Orca
 
-The configs can also be built from the command line:
-```sh
-cd Project-Orca/Backend/CloudCore.Tests
-# Build primary config OR...
-./build-primary-config.sh
-# ...build unit testing config
-./build-unit-test-config.sh
-```
+- **Deterministic client-server model** - The same `PlayerModel` code runs on both client and server, using fixed-point math and seeded RNG to guarantee identical results. Actions execute optimistically on the client for responsiveness while the server validates and maintains authoritative state, leading to a cheat-proof economy.
+- **Type-safe game configs** - Configuration authored in designer-friendly sources (Google Sheets in this case) compiles into shared, type-safe classes that both client and server consume, enabling over-the-air updates without client releases.
+- **Event-driven UI updates** - Client and server listeners bridge player model changes to in-game UI, allowing game logic to notify UI code precisely when changes occur.
+- **Custom LiveOps Dashboard components** - The stock Metaplay dashboard has been extended with custom components for rich visualization of player state and progression for easier player management.
+- **LiveOps events and offers** - Orca uses Metaplay's segmentation, targeting and scheduling features to deliver in-game events and offers to players, allowing designers to work on their content and balancing without client releases.
 
-There's also a tool for comparing game configs:
-```sh
-# Print the usage instructions
-./diff-configs.sh -h
-...
-# Compare primary and alternative configs
-./diff-configs.sh primary alternative conf-diff.tmp
-```
+### Orca's Specific Design Decisions
 
-## Unit testing
-Unit tests for the game logic are placed in `Backend/CloudCore.Tests`
-(see especially `GameLogic` directory).
-When starting to write unit tests
-* see `Backend/CloudCore.Tests/GameLogic/ExampleTest.cs` for a template that you
-  can copy-paste to get started quickly
-* browse through `Backend/CloudCore.Tests/GameLogic/Utils/TestModel.cs` to get
-  familiar with frequently needed utility methods which help one to write
-  more compact test cases
+In addition to just using (and extending) Metaplay's built-in features, Orca implements a few specific design decisions of their own:
 
-The tests can be run in two ways:
-either from (Rider) IDE or from command line.
+- **Trigger system as progression engine** - Orca implements an "if this happens, do that" reaction system entirely in game configs. Triggers fire on events (discoveries, level-ups, unlocks) and execute designer-authored actions (dialogues, UI highlights, rewards), making the entire tutorial and progression flow data-driven.
+- **Separation of behavior from content** - Game systems validate behavior (merge rules, economy constraints) while triggers and configs define content (what unlocks when, which dialogue plays). This separation lets designers iterate on progression, tutorials, and story without touching code.
+- **Tutorial and dialogue as data** - The entire tutorial system, including the live demo, runs through trigger-driven dialogues authored in spreadsheets. Designers script conversations, chain them to game events, and update the first time user experience pacing over-the-air.
 
-### Running from Rider
-First, in Rider open the `Orca-Server` project i.e. `<Orca repo>/Backend/Orca-Server.sln`
+When put all together, Orca is a great real-life example of how to both leverage Metaplay's built-in features and implement your own custom solutions to build a live service game.
 
-Now running the tests is straightforward. Right-click a test file
-(in the file explorer), test class or test method (in the editor) and
-select `Run Unit Tests` (or `Debug Unit Tests`).
+## How to Explore?
 
-In the "Unit Tests" view you might want to group the tests by "Project
-Structure" (click the icon with four small squares) to separate Orca
-tests from Metaplay tests.
+We recommend starting with the [live demo](https://mtply.co/trydemomenu) of Orca to get a feel for how the game plays and what the Metaplay admin tools look like for this project.
 
-### Running from command line
-The tests are run with `<ORCA ROOT DIR>/Backend/CloudCore.Tests` as the working directory.
-To quickly run all test cases use
-```sh
-./run-all.sh
-```
-and to run one or more explicitly specified test cases use
-```sh
-./run-single.sh CanMoveFrom VipPassTest.DailyReward
-```
-For more advanced (and rarely used) way of selecting which tests to run, keep reading.
+Next, have a look at the [Orca Architecture Overview](https://docs.metaplay.io/introduction/samples/orca/orca-arch.html) page in our technical documentation, which gives key context on how Orca was built and the main components of the project.
 
-Under the hood `dotnet` command is used to run the tests. It is assumed
-that `dotnet` is found in `$PATH`. For example, Unity installation
-seems to place it under `~/.dotnet`.
+Because the source code is public, you can also use third-party AI tools like your favorite coding agents or DeepWiki to [quickly deep dive into the technical implementation](https://deepwiki.com/metaplay-shared/orca).
 
-The simplest way to run only a set of tests
-is probably using `~` aka "contains" operator in the `--filter` option.
-To run all Orca tests:
-```sh
-dotnet test --filter "FullyQualifiedName~CloudCore.Tests.GameLogic"
-```
-To run only the tests in a single class (e.g. `MergeBoardTest`):
-```sh
-dotnet test --filter "FullyQualifiedName~CloudCore.Tests.GameLogic.MergeBoardTest"
-# ...or more simply
-dotnet test --filter "FullyQualifiedName~MergeBoardTest"
-# ...or even more simply (filter value without an operator is taken as
-# # a contains on FullyQualifiedName property).
-dotnet test --filter MergeBoardTest
-```
-To run only a single test method (`ItemSpawner`):
-```sh
-dotnet test --filter "FullyQualifiedName~CloudCore.Tests.GameLogic.MergeBoardTest.ItemSpawner"
-# ...or simply
-dotnet test --filter "ItemSpawner"
-```
-To run two test classes (using `|` aka "OR" operator):
-```sh
-dotnet test --filter "FullyQualifiedName~MergeBoardTest|FullyQualifiedName~ItemDiscoveryTest"
-```
+## Usage in your own project
 
-See [dotnet test documentation](https://docs.microsoft.com/en-gb/dotnet/core/tools/dotnet-test)
-for more information about filtering and other options.
+Because the Orca sample's code is released under Apache 2.0 license, you can freely use it as a template for your own project or extract code snippets from it. Please note that the sample assets (e.g. images, 3d models, etc...) are not part of the open-source license and have been included here for demo purposes only.
+
+## Setup Instructions
+
+1. Clone the repository `git clone git@github.com:metaplay-shared/orca.git`
+2. Install the [Metaplay CLI](https://github.com/metaplay/cli)
+3. Initialize the MetaplaySDK with `python init-sdk.py`
+4. Run the server with `metaplay dev server`
+
+The server will start up and you can access the dashboard at [localhost:5550](http://localhost:5550/). You can also run the bot client with `metaplay dev botclient -- -MaxBots=10` and inspect the bot players at [localhost:5550/players](http://localhost:5550/players).
+
+## License
+
+The code in this repository is licensed under [Apache-2.0](https://github.com/metaplay-shared/orca/blob/main/CODE-LICENSE). The other assets (e.g. images, 3d models, etc...) in the project can only be used within the context of this sample, and are **not** available for distribution, modification, and commercial or private use. For commercial inquiries related to the original project, please contact [Zaibatsu Interactive](https://zaibatsu.fi/), as they are the owners of the project.
