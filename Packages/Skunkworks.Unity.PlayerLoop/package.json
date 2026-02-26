@@ -1,0 +1,11 @@
+{
+  "name": "com.skunkworksgames.unity.playerloop",
+  "version": "0.1.0",
+  "hideInEditor": false,
+  "displayName": "Skunkworks Unity Player Loop",
+  "author": {
+    "name": "Skunkworks",
+    "email": "info@skunkworksgames.com",
+    "url": "https://www.skunkworksgames.com"
+  }
+}

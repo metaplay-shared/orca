@@ -1,0 +1,2799 @@
+From 3b0d6398e6d2a3f3d962f3ba43644acc076a0de8 Mon Sep 17 00:00:00 2001
+From: Jurjen Biewenga <jurjen.biewenga@metaplay.io>
+Date: Tue, 7 Jan 2025 13:01:31 +0200
+Subject: [PATCH] Project patch against
+ 60609b8b54db363ade7a3302eb2380eb89a5987a
+
+# Conflicts:
+#	MetaplaySDK/Backend/Cloud/Analytics/BigQueryFormatter.cs
+#	MetaplaySDK/Backend/Cloud/Metaplay.Cloud.csproj
+#	MetaplaySDK/Backend/Server/Database/MetaDatabaseGameServer.cs
+#	MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue
+#	MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionImport.vue
+#	MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue
+#	MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue
+#	MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue
+#	MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue
+#	MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue
+#	MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue
+#	MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue
+#	MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue
+#	MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue
+#	MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue
+#	MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue
+#	MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue
+---
+ .../BotClient/Actors/BotCoordinator.cs        |  14 +-
+ .../BotClient/Entities/BotClientBase.cs       |   6 +-
+ .../Entities/BotClientDeviceGuidService.cs    |   3 +-
+ .../Cloud.Tests/GameConfigPipelineTests.cs    |   2 +
+ .../Cloud/Analytics/BigQueryBatchWriter.cs    | 382 +++++++++++-------
+ .../Cloud/Analytics/BigQueryFormatter.cs      |  87 +++-
+ .../Backend/Cloud/Application/Application.cs  |   3 +
+ .../Backend/Cloud/Metaplay.Cloud.csproj       |   2 +-
+ .../Cloud/RuntimeOptions/RuntimeOptions.cs    |   9 +-
+ MetaplaySDK/Backend/Directory.Build.targets   |   1 +
+ .../Controllers/AuditLogController.cs         |   4 +
+ .../Controllers/FormSchemaController.cs       |   2 +-
+ .../Controllers/LiveOpsEventController.cs     |   6 +-
+ .../Controllers/PlayerChangeNameController.cs |   2 +-
+ .../PlayerGuildRecommendationsController.cs   |   2 +-
+ .../PlayerGuildSearchController.cs            |   5 +-
+ .../Server/AdminApi/GameServerPermissions.cs  |   8 +-
+ .../AsyncMatchmakerActorBase.cs               |   2 +-
+ .../Server/ClientConn/ClientConnection.cs     |   4 +-
+ .../Backend/Server/Metaplay.Server.csproj     |   2 +-
+ .../AdminApi/AdminApiJsonSerializer.cs        |   6 +-
+ .../Forms/MetaFormSchemaProvider.cs           |   1 +
+ .../Forms/MetaFormTypeRegistry.cs             |  13 +-
+ .../ServerShared/Metaplay.ServerShared.csproj |   2 +-
+ .../Client/Core/Base/EnvironmentFamily.cs     |   5 +-
+ .../Client/Core/Config/GameConfigBuild.cs     |  25 +-
+ .../Core/Config/GameConfigBuildInputs.cs      |  11 +-
+ .../Core/Config/GameConfigParsePipeline.cs    |  72 ++++
+ .../Client/Core/Forms/MetaFormAttributes.cs   |  11 +
+ .../Core/Message/CoreHandshakeMessages.cs     |   6 +-
+ .../Client/Core/Offers/MetaOfferGroup.cs      |   5 +
+ MetaplaySDK/Client/Core/Parser/ConfigLexer.cs |   4 +
+ .../Client/Core/Player/IPlayerModel.cs        |   2 +
+ .../Client/Core/Player/PlayerCoreActions.cs   |   4 +
+ .../Client/Core/Player/PlayerCoreEvents.cs    |   4 +
+ .../Client/Core/Player/PlayerModelBase.cs     |   3 +-
+ .../GameConfigParsingTests.cs                 |   2 +
+ .../DefaultOfflineServer.cs                   |   4 +-
+ MetaplaySDK/Dockerfile.server                 |   3 +-
+ MetaplaySDK/Frontend/BrowserSdk/.eslintrc.js  |   5 +
+ MetaplaySDK/Frontend/BrowserSdk/LICENSE       |   1 +
+ MetaplaySDK/Frontend/BrowserSdk/moon.yml      |  28 ++
+ MetaplaySDK/Frontend/BrowserSdk/package.json  |  12 +
+ .../BrowserSdk/src/companyAccountsUtils.ts    | 102 +++++
+ MetaplaySDK/Frontend/BrowserSdk/src/index.ts  | 191 +++++++++
+ .../BrowserSdk/src/unityRuntimeUtils.ts       | 148 +++++++
+ MetaplaySDK/Frontend/BrowserSdk/tsconfig.json |  19 +
+ MetaplaySDK/Frontend/Core/src/App.vue         |  35 ++
+ .../components/experiments/ExperimentForm.vue |   1 +
+ .../gameconfig/GameConfigActionArchive.vue    |   1 +
+ .../gameconfig/GameConfigActionPublish.vue    |   2 +-
+ .../GeneratedUiFormConfigLibraryKeyField.vue  |  11 +
+ .../LiveOpsEventActionExport.vue              |   2 +-
+ .../LiveOpsEventActionImport.vue              |   2 +-
+ .../LiveOpsEventFormModalButton.vue           |   6 +-
+ .../LocalizationActionArchive.vue             |   1 +
+ .../LocalizationActionPublish.vue             |   1 +
+ .../components/mails/BroadcastFormButton.vue  |   2 +-
+ .../adminactions/PlayerActionBan.vue          |   6 +-
+ .../adminactions/PlayerActionDelete.vue       |   6 +-
+ .../adminactions/PlayerActionEditName.vue     |   4 +-
+ .../adminactions/PlayerActionExport.vue       |   3 +-
+ .../adminactions/PlayerActionForceReset.vue   |   2 +-
+ .../adminactions/PlayerActionGdprExport.vue   |   3 +-
+ .../adminactions/PlayerActionGuildTools.vue   |   2 +-
+ .../PlayerActionJoinExperiments.vue           |   3 +-
+ .../adminactions/PlayerActionOverwrite.vue    |   2 +-
+ .../PlayerActionReconnectAccounts.vue         |   5 +-
+ .../adminactions/PlayerActionReset.vue        |   3 +-
+ .../adminactions/PlayerActionSendMail.vue     |   5 +-
+ .../adminactions/PlayerActionSetDeveloper.vue |   5 +-
+ .../adminactions/PlayerActionSetTester.vue    |   4 +-
+ .../PlayerActionToggleSessionDebugMode.vue    |   7 +-
+ .../Frontend/Core/src/initialization.ts       |   2 +
+ MetaplaySDK/Frontend/Core/src/router.ts       |  49 ++-
+ .../Core/src/views/AuditLogListView.vue       |   9 +
+ .../Core/src/views/LocalizationListView.vue   |   2 +-
+ .../src/composites/MActionModal.vue           |   7 +
+ .../src/composites/MActionModalButton.vue     |   6 +
+ MetaplaySDK/Scripts/integration-tests.py      |   6 +-
+ 80 files changed, 1187 insertions(+), 253 deletions(-)
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/.eslintrc.js
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/LICENSE
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/moon.yml
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/package.json
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/src/companyAccountsUtils.ts
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/src/index.ts
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/src/unityRuntimeUtils.ts
+ create mode 100644 MetaplaySDK/Frontend/BrowserSdk/tsconfig.json
+
+diff --git a/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs b/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs
+index 27c69190..0feca452 100644
+--- a/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs
++++ b/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs
+@@ -45,11 +45,12 @@ namespace Metaplay.BotClient
+         static readonly Prometheus.Gauge    c_maxBotId                  = Prometheus.Metrics.CreateGauge("botclient_config_max_bot_id", "BotClient maximum id to use for a spawned bot");
+         static readonly Prometheus.Gauge    c_spawnRate                 = Prometheus.Metrics.CreateGauge("botclient_config_spawn_rate", "BotClient number of new bots to spawn per second");
+ 
+-        EntityId                                _entityId           = EntityId.Create(EntityKindBotCore.BotCoordinator, 0);
+-        ICancelable                             _cancelUpdateTimer  = new Cancelable(Context.System.Scheduler);
+-        ICancelable                             _cancelPrintTimer   = new Cancelable(Context.System.Scheduler);
+-        RandomPCG                               _rnd                = RandomPCG.CreateNew();
+-        HashSet<EntityId>                       _botsInSession      = new HashSet<EntityId>();
++        EntityId          _entityId          = EntityId.Create(EntityKindBotCore.BotCoordinator, 0);
++        ICancelable       _cancelUpdateTimer = new Cancelable(Context.System.Scheduler);
++        ICancelable       _cancelPrintTimer  = new Cancelable(Context.System.Scheduler);
++        RandomPCG         _rnd               = RandomPCG.CreateNew();
++        int               _runningIndex      = 0;
++        HashSet<EntityId> _botsInSession     = new HashSet<EntityId>();
+ 
+         public BotCoordinator(EntityShardConfig shardConfig) : base(shardConfig)
+         {
+@@ -75,7 +76,8 @@ namespace Metaplay.BotClient
+                 {
+                     // Spawn a bot (with random id up to maxBotId)
+                     long maxBotId = botOpts.MaxBotId > 0 ? botOpts.MaxBotId : 5 * botOpts.MaxBots;
+-                    long botIndex = _rnd.NextLong() % maxBotId;
++                    // METAPLAY_CHANGED: Create bots in order
++                    long botIndex = (_runningIndex++) % maxBotId;
+                     EntityId botId = ManualShardingStrategy.CreateEntityId(_selfShardId, (ulong)botIndex);
+                     _log.Verbose("Spawning bot {BotId} (index {BotIndex})", botId, botIndex);
+                     MetaSerialized<MetaMessage> initializeBot = new MetaSerialized<MetaMessage>(new InitializeBot(), MetaSerializationFlags.IncludeAll, logicVersion: null);
+diff --git a/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs b/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs
+index 03db2c63..884d4271 100644
+--- a/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs
++++ b/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs
+@@ -107,7 +107,8 @@ namespace Metaplay.BotClient
+ 
+         LifecycleState                  _lifecycleState;
+         SessionNonceService             _sessionNonceService;
+-        BotClientDeviceGuidService      _sessionGuidService;
++        // METAPLAY_CHANGED: Make protected
++        protected BotClientDeviceGuidService      _sessionGuidService;
+         BotClientCredentialsService     _sessionCredentialsService;
+         ServerConnection                _serverConnection;
+         BotMessageDispatcher            _messageDispatcher;
+@@ -277,7 +278,8 @@ namespace Metaplay.BotClient
+             c_connectAttempts.Inc();
+         }
+ 
+-        BuildVersion GetBuildVersion() => new BuildVersion(version: "0.0.1-bot", buildNumber: CloudCoreVersion.BuildNumber ?? "undefined", commitId: CloudCoreVersion.CommitId ?? "undefined");
++        // METAPLAY_CHANGED: Make public
++        public BuildVersion GetBuildVersion() => new BuildVersion(version: "0.0.1-bot", buildNumber: CloudCoreVersion.BuildNumber ?? "undefined", commitId: CloudCoreVersion.CommitId ?? "undefined");
+ 
+         protected virtual Handshake.ILoginRequestGamePayload                CreateLoginRequestGamePayload()         => null;
+         protected virtual ISessionStartRequestGamePayload                   CreateSessionStartRequestGamePayload()  => null;
+diff --git a/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs b/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs
+index 9d347358..0d5889b9 100644
+--- a/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs
++++ b/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs
+@@ -5,7 +5,8 @@ using Metaplay.Core.Network;
+ 
+ namespace Metaplay.BotClient
+ {
+-    class BotClientDeviceGuidService : ISessionDeviceGuidService
++    // METAPLAY_CHANGED: Make public
++    public class BotClientDeviceGuidService : ISessionDeviceGuidService
+     {
+         string _deviceGuid = MetaGuid.None.ToString();
+ 
+diff --git a/MetaplaySDK/Backend/Cloud.Tests/GameConfigPipelineTests.cs b/MetaplaySDK/Backend/Cloud.Tests/GameConfigPipelineTests.cs
+index aa892285..21e9ddc0 100644
+--- a/MetaplaySDK/Backend/Cloud.Tests/GameConfigPipelineTests.cs
++++ b/MetaplaySDK/Backend/Cloud.Tests/GameConfigPipelineTests.cs
+@@ -16,6 +16,8 @@ namespace Cloud.Tests
+ {
+     [TestFixture(TestFlags.Default)]
+     [TestFixture(TestFlags.PrependNoOpColumn)]
++    // METAPLAY_CHANGED: disabled due to customization
++    [Ignore("Disabled due to SDK customization for 'inherit empty cells from above' behavior")]
+     public class GameConfigPipelineTests
+     {
+         public enum TestFlags
+diff --git a/MetaplaySDK/Backend/Cloud/Analytics/BigQueryBatchWriter.cs b/MetaplaySDK/Backend/Cloud/Analytics/BigQueryBatchWriter.cs
+index 7eac8761..c9ae34fd 100644
+--- a/MetaplaySDK/Backend/Cloud/Analytics/BigQueryBatchWriter.cs
++++ b/MetaplaySDK/Backend/Cloud/Analytics/BigQueryBatchWriter.cs
+@@ -1,27 +1,32 @@
+ // This file is part of Metaplay SDK which is released under the Metaplay SDK License.
+ 
+-using Google;
++using Google.Api.Gax.Grpc;
+ using Google.Apis.Bigquery.v2.Data;
+-using Google.Apis.Requests;
+ using Google.Cloud.BigQuery.V2;
++using Google.Cloud.BigQuery.Storage.V1;
++using Google.Protobuf;
++using Grpc.Core;
+ using Metaplay.Core;
+ using System;
+ using System.Collections.Generic;
+ using System.Diagnostics;
+-using System.Linq;
+-using System.Net.Http;
+ using System.Threading;
+ using System.Threading.Tasks;
++using static System.FormattableString;
+ 
+ namespace Metaplay.Cloud.Analytics
+ {
+     public interface IBigQueryBatchWriter
+     {
++        /// <summary>
++        /// Represents a batch buffer that can be used to write rows into BigQuery table.
++        /// </summary>
+         public class BatchBuffer
+         {
+-            public List<BigQueryInsertRow> Rows = new List<BigQueryInsertRow>();
+-            public int NumRows => Rows.Count;
+-            public void Add(BigQueryInsertRow row)
++            public List<ByteString> Rows    = new List<ByteString>();
++            public int              NumRows => Rows.Count;
++
++            public void Add(ByteString row)
+             {
+                 Rows.Add(row);
+             }
+@@ -50,42 +55,50 @@ namespace Metaplay.Cloud.Analytics
+     /// batch buffers are available, the allocation fails and caller may not proceed. Written batch buffers
+     /// are available for allocation again after the write into BigQuery table has completed in the background.
+     /// </summary>
+-    public class BigQueryBatchWriter : IBigQueryBatchWriter
++    public class BigQueryBatchWriter(
++        IMetaLogger log,
++        BigQueryWriteClient writeClient,
++        TableName tableName,
++        AnalyticsSinkMetrics metrics,
++        int maxNumOpenBatches)
++        : IBigQueryBatchWriter
+     {
+-        readonly IMetaLogger            _log;
+-        readonly BigQueryClient         _client;
+-        readonly TableReference         _tableReference;
+-        readonly AnalyticsSinkMetrics   _metrics;
+-        readonly int                    _maxNumOpenBatches;
+-        readonly object                 _lock;
+-        readonly List<Task>             _flushTasks;
+-        int                             _numOpenBatches;
+-
+-        public BigQueryBatchWriter(IMetaLogger log, BigQueryClient client, TableReference tableReference, AnalyticsSinkMetrics metrics, int maxNumOpenBatches)
+-        {
+-            _log = log ?? throw new ArgumentNullException(nameof(log));
+-            _client = client ?? throw new ArgumentNullException(nameof(client));
+-            _tableReference = tableReference ?? throw new ArgumentNullException(nameof(tableReference));
+-            _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+-            _maxNumOpenBatches = maxNumOpenBatches;
+-            _lock = new object();
+-            _flushTasks = new List<Task>();
+-            _numOpenBatches = 0;
+-        }
+-
+-        public static async Task<BigQueryBatchWriter> CreateAsync(IMetaLogger log, string projectId, string credentialsJson, string datasetId, string tableId, int maxNumOpenBatches, AnalyticsSinkMetrics metrics)
++        readonly IMetaLogger          _log            = log ?? throw new ArgumentNullException(nameof(log));
++        readonly BigQueryWriteClient  _writeClient    = writeClient ?? throw new ArgumentNullException(nameof(writeClient));
++        readonly TableName            _tableName      = tableName ?? throw new ArgumentNullException(nameof(tableName));
++        readonly ProtoSchema          _protoSchema    = new ProtoSchema {ProtoDescriptor = BigQuery.Event.Descriptor.ToProto()};
++        readonly AnalyticsSinkMetrics _metrics        = metrics ?? throw new ArgumentNullException(nameof(metrics));
++        readonly object               _lock           = new object();
++        readonly List<Task>           _flushTasks     = new List<Task>();
++        int                           _numOpenBatches = 0;
++
++        public static async Task<BigQueryBatchWriter> CreateAsync(
++            IMetaLogger log,
++            string projectId,
++            string credentialsJson,
++            string datasetId,
++            string tableId,
++            int maxNumOpenBatches,
++            AnalyticsSinkMetrics metrics)
+         {
++            // Create a BigQueryClient for interacting with BigQuery API.
+             BigQueryClientBuilder builder = new BigQueryClientBuilder();
+-            builder.ProjectId = projectId;
++            builder.ProjectId       = projectId;
+             builder.JsonCredentials = credentialsJson;
++            BigQueryClient client         = await builder.BuildAsync();
+ 
+-            BigQueryClient client = await builder.BuildAsync();
+             TableReference tableReference = client.GetTableReference(projectId, datasetId, tableId);
+-
+             // Test the table exists
+             _ = await client.GetTableAsync(tableReference);
+ 
+-            return new BigQueryBatchWriter(log, client, tableReference, metrics, maxNumOpenBatches);
++            // Create a BigQueryWriteClient for writing data to BigQuery Storage API.
++            BigQueryWriteClientBuilder writeBuilder = new BigQueryWriteClientBuilder();
++            writeBuilder.JsonCredentials            = credentialsJson;
++            BigQueryWriteClient writeClient         = await writeBuilder.BuildAsync();
++
++            TableName           tableName           = TableName.FromProjectDatasetTable(projectId, datasetId, tableId);
++
++            return new BigQueryBatchWriter(log, writeClient, tableName, metrics, maxNumOpenBatches);
+         }
+ 
+         public async ValueTask DisposeAsync()
+@@ -95,21 +108,20 @@ namespace Metaplay.Cloud.Analytics
+             {
+                 ongoingFlushes = _flushTasks.ToArray();
+             }
+-            await Task.WhenAll(ongoingFlushes).ConfigureAwait(false);
+ 
+-            // BigQueryClient does not need to be disposed if it is long-running. But needs to
+-            // be disposed if created often. We cannot know which case it is here, so Dispose()
+-            _client.Dispose();
++            await Task.WhenAll(ongoingFlushes).ConfigureAwait(false);
+         }
+ 
+         public IBigQueryBatchWriter.BatchBuffer TryAllocateBatchBuffer()
+         {
+             lock (_lock)
+             {
+-                if (_numOpenBatches >= _maxNumOpenBatches)
++                if (_numOpenBatches >= maxNumOpenBatches)
+                     return null;
++
+                 _numOpenBatches++;
+             }
++
+             return new IBigQueryBatchWriter.BatchBuffer();
+         }
+ 
+@@ -119,133 +131,197 @@ namespace Metaplay.Cloud.Analytics
+             lock (_lock)
+             {
+                 _flushTasks.Add(flushTask);
+-                _ = flushTask.ContinueWith(task =>
+-                {
+-                    lock (_lock)
++                _ = flushTask.ContinueWith(
++                    task =>
+                     {
+-                        _flushTasks.Remove(flushTask);
+-                        _numOpenBatches--;
+-                    }
+-                }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
++                        lock (_lock)
++                        {
++                            _flushTasks.Remove(flushTask);
++                            _numOpenBatches--;
++                        }
++                    },
++                    CancellationToken.None,
++                    TaskContinuationOptions.ExecuteSynchronously,
++                    TaskScheduler.Default);
+             }
+         }
+ 
+-        async Task ExecuteFlushAsync(IBigQueryBatchWriter.BatchBuffer buffer)
++        private static string FormatSize(long sizeInBytes)
+         {
+-            int numRetries = 0;
++            string[] sizeUnits = ["B", "KB", "MB", "GB", "TB"];
++            double   size      = sizeInBytes;
++            int      unitIndex = 0;
++
++            while (size >= 1024 && unitIndex < sizeUnits.Length - 1)
++            {
++                size /= 1024;
++                unitIndex++;
++            }
+ 
++            return Invariant($"{size:0.##} {sizeUnits[unitIndex]}");
++        }
++
++        async Task ExecuteFlushAsync(IBigQueryBatchWriter.BatchBuffer buffer)
++        {
+             if (buffer.NumRows == 0)
+                 return;
+ 
+-            for (;;)
+-            {
+-                int errorHttpStatusCode;
+-                bool isRateLimitExceededError;
++            const int maxRetries = 5;
++            int       retryCount = 0;
+ 
++            while (retryCount < maxRetries)
++            {
+                 try
+                 {
+-                    InsertOptions options = new InsertOptions();
+-                    options.SkipInvalidRows = true;
+-                    options.SuppressInsertErrors = true;
+-
+                     Stopwatch sw = Stopwatch.StartNew();
+-                    BigQueryInsertResults results = await _client.InsertRowsAsync(_tableReference, buffer.Rows, options);
+-                    if (results.Status == BigQueryInsertStatus.AllRowsInserted)
+-                    {
+-                        // Success patch
+-                        _metrics.EventsFlushed.Inc(buffer.NumRows);
+-                        _metrics.ChunksFlushed.Inc();
+-                        _metrics.BatchWriteDuration.Observe(sw.Elapsed.TotalSeconds);
+-                        return;
+-                    }
+-
+-                    // Only happens if input is fully or partially invalid. Log this and exit. No point in retrying with broken data.
+ 
+-                    BigQueryInsertRowErrors sampleResult    = results.Errors.FirstOrDefault();
+-                    SingleError             sampleError     = sampleResult?.FirstOrDefault();
+-                    BigQueryInsertRow       sampleRow       = sampleResult?.OriginalRow;
++                    // Initialize streaming call, retrieving the stream object
++                    BigQueryWriteClient.AppendRowsStream                                  appendRowsStream = _writeClient.AppendRows();
++                    using AsyncDuplexStreamingCall<AppendRowsRequest, AppendRowsResponse> grpcCall         = appendRowsStream.GrpcCall;
+ 
+-                    _log.Error(
+-                        "Attempted to write invalid data into into BigQuery table ({DatasetId}, {TableId}). {NumFailures} rows failed, for errors such as {SampleError} for {SampleRow}.",
+-                        _tableReference.DatasetId,
+-                        _tableReference.TableId,
+-                        results.OriginalRowsWithErrors,
+-                        PrettyPrint.Compact(sampleError),
+-                        PrettyPrint.Compact(sampleRow));
++                    // Use the default stream
++                    WriteStreamName streamName = new WriteStreamName(_tableName.ProjectId, _tableName.DatasetId, _tableName.TableId, "_default");
+ 
+-                    // Metrics. Report the whole batch as failed, but report events as precisely as possible.
++                    // Create a batch of row data by appending serialized bytes to the
++                    // SerializedRows repeated field.
++                    AppendRowsRequest.Types.ProtoData protoData = new AppendRowsRequest.Types.ProtoData
++                    {
++                        WriterSchema = _protoSchema,
++                        Rows         = new ProtoRows {SerializedRows    = {buffer.Rows}},
++                    };
++
++                    // The size of a single AppendRowsRequest must be less than 10 MB in size.
++                    // Let's use 8MB as the limit for the batch size for safety.
++                    int sizeLimit = 8 * 1024 * 1024;
++                    // sizeLimit = 10 * 1024; // For testing purposes, limit the size to 10 KB.
++                    int sizeInBytes = protoData.CalculateSize();
++
++                    // Split the batch into smaller batches if the size exceeds the limit.
++                    if (sizeInBytes > sizeLimit)
++                    {
++                        int numBatches = (int)Math.Ceiling((double)sizeInBytes / sizeLimit);
++                        int batchSize  = (int)Math.Ceiling((double)buffer.NumRows / numBatches);
++                        for (int i = 0; i < numBatches; i++)
++                        {
++                            int start = i * batchSize;
++                            int end   = Math.Min((i + 1) * batchSize, buffer.NumRows);
++                            AppendRowsRequest.Types.ProtoData protoDataBatch = new AppendRowsRequest.Types.ProtoData
++                            {
++                                WriterSchema = _protoSchema,
++                                Rows         = new ProtoRows {SerializedRows = {buffer.Rows.GetRange(start, end - start)}},
++                            };
++
++                            _log.Debug(
++                                "Writing batch ({BatchSize} out of total {SizeInBytes}) {BatchIndex} of {NumBatches} to BigQuery table ({DatasetId}, {TableId})",
++                                FormatSize(protoDataBatch.CalculateSize()),
++                                FormatSize(sizeInBytes),
++                                i + 1,
++                                numBatches,
++                                _tableName.DatasetId,
++                                _tableName.TableId);
++
++                            await appendRowsStream.WriteAsync(
++                                new AppendRowsRequest
++                                {
++                                    WriteStreamAsWriteStreamName = streamName,
++                                    ProtoRows                    = protoDataBatch,
++                                });
++                        }
++                    }
++                    else
++                    {
++                        // Stream a request to the server.
++                        _log.Debug("Writing batch ({SizeInBytes}) of {RowCount} rows to BigQuery table ({DatasetId}, {TableId})", FormatSize(sizeInBytes), buffer.NumRows, _tableName.DatasetId, _tableName.TableId);
++
++                        await appendRowsStream.WriteAsync(
++                            new AppendRowsRequest
++                            {
++                                WriteStreamAsWriteStreamName = streamName,
++                                ProtoRows                    = protoData,
++                            });
++                    }
+ 
+-                    int numErrorRows = results.Errors.Count();
+-                    _metrics.EventsFlushed.Inc(buffer.NumRows - numErrorRows);
+-                    _metrics.EventsDropped.Inc(numErrorRows);
+-                    _metrics.ChunksDropped.Inc();
+-                    return;
+-                }
+-                catch (GoogleApiException apiEx)
+-                {
+-                    errorHttpStatusCode = (int)apiEx.HttpStatusCode;
+-                    isRateLimitExceededError = apiEx.Error?.Errors?.Any(error => string.Equals("rateLimitExceeded", error.Reason, StringComparison.Ordinal)) ?? false;
+-                    _log.Warning("Writing into BigQuery table ({DatasetId}, {TableId}) failed with api error: {Error}", _tableReference.DatasetId, _tableReference.TableId, apiEx);
+-                }
+-                catch (HttpRequestException httpEx)
+-                {
+-                    errorHttpStatusCode = (int)(httpEx.StatusCode ?? default);
+-                    isRateLimitExceededError = false;
+-                    _log.Warning("Writing into BigQuery table ({DatasetId}, {TableId}) failed with http error: {Error}", _tableReference.DatasetId, _tableReference.TableId, httpEx);
+-                }
+-                catch(Exception ex)
+-                {
+-                    errorHttpStatusCode = 0;
+-                    isRateLimitExceededError = false;
+-                    _log.Warning("Writing into BigQuery table ({DatasetId}, {TableId}) failed with unknown error: {Error}", _tableReference.DatasetId, _tableReference.TableId, ex);
+-                }
++                    // Complete writing requests to the stream.
++                    await appendRowsStream.WriteCompleteAsync();
+ 
+-                bool allowRetry;
+-                switch (errorHttpStatusCode)
+-                {
+-                    case 400: // Invalid
++                    // Sending requests and retrieving responses can be arbitrarily interleaved.
++                    // Exact sequence will depend on client/server behavior.
++                    // This will complete once all server responses have been processed.
++                    await using (AsyncResponseStream<AppendRowsResponse> appenderResponseStream = appendRowsStream.GetResponseStream())
+                     {
+-                        allowRetry = false;
+-                        break;
++                        await foreach (AppendRowsResponse responseItem in appenderResponseStream)
++                        {
++                            if (responseItem.RowErrors?.Count > 0)
++                            {
++                                // Metrics. Report the whole batch as failed, but report events as precisely as possible.
++                                _metrics.EventsDropped.Inc(buffer.NumRows);
++                                _metrics.ChunksDropped.Inc();
++
++                                // Log the error rows
++                                Dictionary<string, string> errorRows = new Dictionary<string, string>();
++                                foreach (RowError rowError in responseItem.RowErrors)
++                                {
++                                    errorRows.Add(BigQuery.Event.Parser.ParseFrom(buffer.Rows[(int)rowError.Index]).ToString(), rowError.ToString());
++                                }
++
++                                _log.Error("Error appending rows. Row errors: {ErrorRows}", errorRows);
++                            }
++
++                            // Success patch
++                            _metrics.EventsFlushed.Inc(buffer.NumRows);
++                            _metrics.ChunksFlushed.Inc();
++                            _metrics.BatchWriteDuration.Observe(sw.Elapsed.TotalSeconds);
++                        }
+                     }
+ 
+-                    case 403:
++                    // If successful, break out of the retry loop
++                    break;
++                }
++                catch (RpcException grpcEx)
++                {
++                    StatusCode grpcStatusCode = grpcEx.Status.StatusCode;
++
++                    // Handle specific errors
++                    if (grpcStatusCode is
++                        StatusCode.Unavailable or
++                        StatusCode.DeadlineExceeded or
++                        StatusCode.Internal)
+                     {
+-                        // 403 Not allowed is emitted for various non-retryable errors and
+-                        // for rate limiting. Retry only if the error was for rate limiting.
+-                        if (isRateLimitExceededError)
+-                            allowRetry = true;
+-                        else
+-                            allowRetry = false;
+-                        break;
++                        // Increment retry count and wait before retrying
++                        retryCount++;
++                        TimeSpan retryTime = TimeSpan.FromSeconds(Math.Pow(2, retryCount)); // Exponential backoff
++
++                        // Log the error
++                        _log.Error(
++                            "Writing into BigQuery table ({DatasetId}, {TableId}) failed with api error: {StatusCode} {Error} -- Will retry in {RetryTime}s ...",
++                            _tableName.DatasetId,
++                            _tableName.TableId,
++                            grpcStatusCode,
++                            grpcEx,
++                            retryTime);
++
++                        await Task.Delay(retryTime);
+                     }
+-
+-                    case 500:
+-                    case 503:
+-                    case 0:     // Untyped exception. Cannot really do anything, so let's just retry.
+-                    default:    // Unknown exception.
++                    else
+                     {
+-                        allowRetry = true;
++                        // Log the error
++                        _log.Error(
++                            "Writing into BigQuery table ({DatasetId}, {TableId}) failed with api error: {StatusCode} {Error}",
++                            _tableName.DatasetId,
++                            _tableName.TableId,
++                            grpcStatusCode,
++                            grpcEx);
++
++                        // For permanent errors, drop the batch and exit
++                        _metrics.EventsDropped.Inc(buffer.NumRows);
++                        _metrics.ChunksDropped.Inc();
+                         break;
+                     }
+                 }
+-
+-                // This is a retryable error. Retry with back-off.
+-                // BigQuery SLA defines the following back-off strategy: Wait for 1 second, then retry. If retry fails, double the wait
+-                // and repeat up to 32 seconds.
+-                numRetries++;
+-                if (allowRetry && numRetries >= 7)
++                catch (Exception ex)
+                 {
+-                    // Retry failure
+-                    _log.Error("Writing into BigQuery table ({DatasetId}, {TableId}) failed. Failed to write {NumRows} rows.", _tableReference.DatasetId, _tableReference.TableId);
+-                    _metrics.EventsDropped.Inc(buffer.NumRows);
+-                    _metrics.ChunksDropped.Inc();
+-                    return;
++                    _log.Error("Writing into BigQuery table ({DatasetId}, {TableId}) failed with unknown error: {Error}", _tableName.DatasetId, _tableName.TableId, ex);
+                 }
+-
+-                int retryCooldownSeconds = (1 << (numRetries - 1)); // following sequence: 1, 2, 4, 8, 16, 32
+-                _log.Information("Will retry write into BigQuery table ({DatasetId}, {TableId}) after {NumSeconds} num seconds. Retry attempt {RetryNumber}.", _tableReference.DatasetId, _tableReference.TableId, retryCooldownSeconds, numRetries);
+-                await Task.Delay(TimeSpan.FromSeconds(retryCooldownSeconds));
+             }
+         }
+     }
+@@ -254,37 +330,35 @@ namespace Metaplay.Cloud.Analytics
+     /// A <see cref="BigQueryBatchWriter"/> that instead of writing the rows into big query, writes
+     /// the inserted rows to console. For Debugging.
+     /// </summary>
+-    public class BigQueryDebugLogBatchWriter : IBigQueryBatchWriter
++    public class BigQueryDebugLogBatchWriter(IMetaLogger log) : IBigQueryBatchWriter
+     {
+-        readonly IMetaLogger _log;
+-
+-        public BigQueryDebugLogBatchWriter(IMetaLogger log)
+-        {
+-            _log = log;
+-        }
++        readonly IMetaLogger _log = log ?? throw new ArgumentNullException(nameof(log));
+ 
+-        ValueTask IBigQueryBatchWriter.DisposeAsync()
++        public ValueTask DisposeAsync()
+         {
+             return ValueTask.CompletedTask;
+         }
+ 
+-        IBigQueryBatchWriter.BatchBuffer IBigQueryBatchWriter.TryAllocateBatchBuffer()
++        public IBigQueryBatchWriter.BatchBuffer TryAllocateBatchBuffer()
+         {
+             return new IBigQueryBatchWriter.BatchBuffer();
+         }
+ 
+         void IBigQueryBatchWriter.SubmitBufferForWriting(IBigQueryBatchWriter.BatchBuffer buffer)
+         {
+-            List<string> rows = new List<string>();
+-            for (int ndx = 0; ndx < buffer.NumRows; ++ndx)
++            foreach (ByteString row in buffer.Rows)
+             {
+-                // \todo: print all fields
+-                rows.Add(
+-                    FormattableString.Invariant($"source_id: {buffer.Rows[ndx]["source_id"]}, ")
+-                    + FormattableString.Invariant($"event_name:{buffer.Rows[ndx]["event_name"]}, ")
+-                    + $"event_params: {PrettyPrint.Compact(buffer.Rows[ndx]["event_params"])}");
++                try
++                {
++                    BigQuery.Event message      = BigQuery.Event.Parser.ParseFrom(row);
++                    string         readableData = message.ToString();
++                    _log.Debug("Dry-run write row into BigQuery table: {RowData}", PrettyPrint.Verbose(readableData));
++                }
++                catch (Exception ex)
++                {
++                    _log.Error("Failed to parse row data: {Error}", ex);
++                }
+             }
+-            _log.Debug("Attempted to write to BigQuery: {Event}", PrettyPrint.Verbose(rows));
+         }
+     }
+ }
+diff --git a/MetaplaySDK/Backend/Cloud/Analytics/BigQueryFormatter.cs b/MetaplaySDK/Backend/Cloud/Analytics/BigQueryFormatter.cs
+index 288def46..dc69cfb8 100644
+--- a/MetaplaySDK/Backend/Cloud/Analytics/BigQueryFormatter.cs
++++ b/MetaplaySDK/Backend/Cloud/Analytics/BigQueryFormatter.cs
+@@ -145,17 +145,17 @@ namespace Metaplay.Cloud.Analytics
+ 
+             public List<BigQueryInsertRow> Format(object eventBase)
+             {
+-                List<BigQueryInsertRow> eventParams = new List<BigQueryInsertRow>(ExpectedParamCount);
++                List<Dictionary<string, object>> eventParams = new List<Dictionary<string, object>>(ExpectedParamCount);
+                 foreach (ParamSpec paramSpec in TopLevelParameterSpecs)
+                     FlattenAndFormatInto(paramSpec, eventBase, pathPrefix: null, eventParams);
+                 return eventParams;
+             }
+ 
+-            void FlattenAndFormatInto(ParamSpec paramSpec, object container, string pathPrefix, List<BigQueryInsertRow> dst)
++            void FlattenAndFormatInto(ParamSpec paramSpec, object container, string pathPrefix, List<Dictionary<string, object>> dst)
+             {
+                 if (paramSpec.ValueKind == ParamSpec.Kind.StringConstant)
+                 {
+-                    BigQueryInsertRow row = new BigQueryInsertRow();
++                    Dictionary<string, object> row = new Dictionary<string, object>();
+                     row.Add("key", pathPrefix + paramSpec.FullName);
+                     if (paramSpec.StringConstant != null)
+                         row.Add("string_value", paramSpec.StringConstant);
+@@ -164,7 +164,7 @@ namespace Metaplay.Cloud.Analytics
+                 }
+                 else if (paramSpec.ValueKind == ParamSpec.Kind.RecursionLimit)
+                 {
+-                    dst.Add(new BigQueryInsertRow()
++                    dst.Add(new Dictionary<string, object>
+                     {
+                         { "key", pathPrefix + paramSpec.FullName },
+                         { "string_value", "__recursion_limit" },
+@@ -246,7 +246,7 @@ namespace Metaplay.Cloud.Analytics
+                         default: throw new InvalidOperationException("invalid kind");
+                     }
+ 
+-                    BigQueryInsertRow row = new BigQueryInsertRow();
++                    Dictionary<string, object> row = new Dictionary<string, object>();
+                     row.Add("key", pathPrefix + paramSpec.FullName);
+                     if (value != null)
+                         row.Add(kindName, value);
+@@ -928,7 +928,7 @@ namespace Metaplay.Cloud.Analytics
+         /// Formats an event into the BigQuery analytics table format, and returns the resulting rows.
+         /// This should be inserted into event_params column.
+         /// </summary>
+-        List<BigQueryInsertRow> FormatEventArgs(EventFormatter formatter, AnalyticsEventBase eventBase)
++        List<Dictionary<string, object>> FormatEventArgs(EventFormatter formatter, AnalyticsEventBase eventBase)
+         {
+             return formatter.Format(eventBase);
+         }
+@@ -944,11 +944,11 @@ namespace Metaplay.Cloud.Analytics
+             // Populate context from envelope.
+             if (contextBase is PlayerAnalyticsContext playerContext)
+             {
+-                BigQueryInsertRow context = new BigQueryInsertRow();
+-                List<BigQueryInsertRow> experiments = new List<BigQueryInsertRow>();
++                Dictionary<string, object> context = new Dictionary<string, object>();
++                List<Dictionary<string, object>> experiments = new List<Dictionary<string, object>>();
+                 foreach ((string experimentId, string variantId) in playerContext.Experiments)
+                 {
+-                    experiments.Add(new BigQueryInsertRow()
++                    experiments.Add(new Dictionary<string, object>()
+                     {
+                         {"experiment", experimentId },
+                         {"variant", variantId },
+@@ -965,7 +965,7 @@ namespace Metaplay.Cloud.Analytics
+             else if (contextBase is GuildAnalyticsContext guildContext)
+             {
+                 // Guild context has not yet any fields and empty records are not supported.
+-                //BigQueryInsertRow context = new BigQueryInsertRow();
++                //Dictionary<string, object> context = new Dictionary<string, object>();
+                 //return ("guild", context);
+             }
+             else if (contextBase is ServerAnalyticsContext serverContext)
+@@ -979,12 +979,12 @@ namespace Metaplay.Cloud.Analytics
+         List<BigQueryInsertRow> FormatEventLabels(MetaDictionary<AnalyticsLabel, string> labels)
+         {
+             if (labels == null || labels.Count == 0)
+-                return new List<BigQueryInsertRow>();
++                return new List<Dictionary<string, object>>();
+ 
+-            List<BigQueryInsertRow> rows = new List<BigQueryInsertRow>(capacity: labels.Count);
++            List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>(capacity: labels.Count);
+             foreach ((AnalyticsLabel label, string value) in labels)
+             {
+-                BigQueryInsertRow record = new BigQueryInsertRow();
++                Dictionary<string, object> record = new Dictionary<string, object>();
+                 record.Add("name", label.ToString());
+                 record.Add("string_value", value);
+                 rows.Add(record);
+@@ -1021,11 +1021,62 @@ namespace Metaplay.Cloud.Analytics
+             fields.Add("event_params", eventParams);
+             fields.Add("labels", FormatEventLabels(eventEnvelope.Labels));
+ 
+-            BigQueryInsertRow row = new BigQueryInsertRow();
+-            if (enableBigQueryEventDeduplication)
+-                row.InsertId = id;
+-            row.Add(fields);
+-            buffer.Add(row);
++                    switch (r.Value)
++                    {
++                        case string rValue:
++                            param.StringValue = rValue;
++                            break;
++                        case double dValue:
++                            param.DoubleValue = dValue;
++                            break;
++                        case float fValue:
++                            param.DoubleValue = fValue;
++                            break;
++                        case int i:
++                            param.IntValue = i;
++                            break;
++                    }
++                }
++                protoMessage.EventParams.Add(param);
++            }
++
++            // Context Rows
++            // Player
++            if (eventEnvelope.Context is PlayerAnalyticsContext playerContext)
++            {
++                BigQuery.Event.Types.Player player = new BigQuery.Event.Types.Player();
++                foreach ((string experimentId, string variantId) in playerContext.Experiments)
++                {
++                    var experiment = new BigQuery.Event.Types.Experiment();
++                    experiment.Experiment_ = experimentId;
++                    experiment.Variant = variantId;
++
++                    player.Experiments.Add(experiment);
++                }
++
++                // ReSharper disable once ConvertTypeCheckPatternToNullCheck
++                if (playerContext.SessionNumber is int sessionNumber)
++                {
++                    player.SessionNumber = sessionNumber;
++                }
++                protoMessage.Player = player;
++            }
++
++            // Label rows
++            if (eventEnvelope.Labels != null && eventEnvelope.Labels.Count != 0)
++            {
++                foreach ((AnalyticsLabel label, string value) in eventEnvelope.Labels)
++                {
++                    BigQuery.Event.Types.Label protoLabel  = new BigQuery.Event.Types.Label();
++                    protoLabel.Name = label.ToString();
++                    protoLabel.StringValue = value;
++                    protoMessage.Labels.Add(protoLabel);
++                }
++            }
++
++            // Serialize the ProtoBuf message to a ByteString
++            ByteString byteString = protoMessage.ToByteString();
++            buffer.Add(byteString);
+         }
+ 
+         /// <summary>
+diff --git a/MetaplaySDK/Backend/Cloud/Application/Application.cs b/MetaplaySDK/Backend/Cloud/Application/Application.cs
+index 80f8fe3e..cc7c3a33 100644
+--- a/MetaplaySDK/Backend/Cloud/Application/Application.cs
++++ b/MetaplaySDK/Backend/Cloud/Application/Application.cs
+@@ -67,6 +67,9 @@ namespace Metaplay.Cloud.Application
+             IsStagingEnvironment ? "stage" :
+             IsDevelopmentEnvironment ? "dev" :
+             IsLocalEnvironment ? "local" :
++            // METAPLAY_CHANGED: Demo
++            IsDemoEnvironment ? "demo" :
++            IsSalesEnvironment ? "sales" :
+             null;
+         [MetaDescription("Enables the development features (such as cheats, in-app dev purchases, etc.) for all players.")]
+         public bool                     EnableDevelopmentFeatures   { get; private set; } = IsLocalEnvironment || IsDevelopmentEnvironment;
+diff --git a/MetaplaySDK/Backend/Cloud/Metaplay.Cloud.csproj b/MetaplaySDK/Backend/Cloud/Metaplay.Cloud.csproj
+index 4a4c239d..9b80e314 100644
+--- a/MetaplaySDK/Backend/Cloud/Metaplay.Cloud.csproj
++++ b/MetaplaySDK/Backend/Cloud/Metaplay.Cloud.csproj
+@@ -1,4 +1,4 @@
+-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
++<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+   <PropertyGroup>
+     <TargetFrameworks>net8.0</TargetFrameworks>
+     <LangVersion>Latest</LangVersion>
+diff --git a/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs b/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs
+index 259eed9b..bbb8b414 100644
+--- a/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs
++++ b/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs
+@@ -18,9 +18,12 @@ namespace Metaplay.Cloud.RuntimeOptions
+ 
+         public static bool IsLocalEnvironment       => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Local;
+         public static bool IsDevelopmentEnvironment => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Development;
+-        public static bool IsStagingEnvironment     => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Staging;
+-        public static bool IsProductionEnvironment  => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Production;
+-        public static bool IsCloudEnvironment       => !IsLocalEnvironment;
++        // METAPLAY_CHANGED: Demo
++        public static bool IsDemoEnvironment       => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Demo;
++        public static bool IsSalesEnvironment      => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Sales;
++        public static bool IsStagingEnvironment    => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Staging;
++        public static bool IsProductionEnvironment => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Production;
++        public static bool IsCloudEnvironment      => !IsLocalEnvironment;
+ 
+         [IgnoreDataMember]
+         protected IMetaLogger Log { get; }
+diff --git a/MetaplaySDK/Backend/Directory.Build.targets b/MetaplaySDK/Backend/Directory.Build.targets
+index 85a543ea..50f199ad 100644
+--- a/MetaplaySDK/Backend/Directory.Build.targets
++++ b/MetaplaySDK/Backend/Directory.Build.targets
+@@ -1,6 +1,7 @@
+ <Project>
+  <PropertyGroup>
+   <DefineConstants Condition=" '$(MetaplayDefines)' != '' ">$(DefineConstants);$(MetaplayDefines)</DefineConstants>
++
+   <!-- Enable to use the pre-R25 version of the fixed-point (F32 and F64) parsing. -->
+   <!-- <DefineConstants>$(DefineConstants);METAPLAY_USE_LEGACY_FIXED_POINT_PARSING</DefineConstants> -->
+  </PropertyGroup>
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs
+index ec446806..0fca1c9e 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs
+@@ -35,7 +35,11 @@ namespace Metaplay.Server.AdminApi.Controllers
+         {
+             PersistedAuditLogEvent persistedEvent = await MetaDatabase.Get().GetAuditLogEventAsync(eventIdStr);
+             if (persistedEvent != null)
++            {
++                // METAPLAY_CHANGED: Hide the source IP address
++                persistedEvent.SourceIpAddress = "<ip>";
+                 return Ok(new AuditLogEvent(persistedEvent));
++            }
+             else
+                 throw new MetaplayHttpException(404, "Event not found.", $"Cannot find event with Event ID {eventIdStr}.");
+         }
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs
+index 09f2cef0..39cba204 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs
+@@ -58,7 +58,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+             }
+             catch (Exception ex)
+             {
+-                _logger.LogError("Form validation triggered an exception: {0}", ex);
++                _logger.LogWarning("Form validation triggered an exception: {0}", ex);
+                 return new JsonResult(new[] {new FormValidationResult("", $"Validation failed due to error. {Environment.NewLine}{ex}")});
+             }
+         }
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs
+index 0ec6d789..64994e1c 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs
+@@ -518,12 +518,16 @@ namespace Metaplay.Server.AdminApi.Controllers
+         #region Create new event
+ 
+         [HttpPost("createLiveOpsEvent")]
+-        [RequirePermission(MetaplayPermissions.ApiLiveOpsEventsEdit)]
++        [RequirePermission(MetaplayPermissions.ApiLiveOpsEventsView)]
+         public async Task<ActionResult<CreateEventApiResult>> CreateLiveOpsEvent()
+         {
+             CreateEventApiBody body = await ParseBodyAsync<CreateEventApiBody>();
+             EditableEventParams eventParams = body.Parameters;
+ 
++            string[] roles = GetActiveUserRoles(HttpContext);
++            if(!body.ValidateOnly && !HasPermissionForRoles(roles, MetaplayPermissions.ApiLiveOpsEventsEdit))
++                return null;
++
+             LiveOpsEventDiagnostics diagnostics = new();
+ 
+             ValidateEventParams(eventParams, diagnostics);
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs
+index 66ad84f6..4f6f7d6c 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs
+@@ -47,7 +47,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+         /// </summary>
+         [HttpPost("players/{playerIdStr}/validateName")]
+         [Consumes("application/json")]
+-        [RequirePermission(MetaplayPermissions.ApiPlayersEditName)]
++        [RequirePermission(MetaplayPermissions.DashboardView)]
+         public async Task<ActionResult<ChangeNameResponse>> ValidateName(string playerIdStr, [FromBody] PlayerChangeNameBody body)
+         {
+             // Resolve the player Id
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs
+index 5041da01..e9c5d0e2 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs
+@@ -24,7 +24,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+         /// Test:   curl http://localhost:5550/api/players/{PLAYERID}/guildRecommendations -X POST -d ""
+         /// </summary>
+         [HttpPost("players/{playerIdStr}/guildRecommendations")]
+-        [RequirePermission(MetaplayPermissions.ApiPlayersGuildTools)]
++        [RequirePermission(MetaplayPermissions.DashboardView)]
+         public async Task<ActionResult<IEnumerable<GuildDiscoveryInfoBase>>> GuildRecommendations(string playerIdStr)
+         {
+             EntityId playerId = await ParsePlayerIdStrAndCheckForExistenceAsync(playerIdStr);
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs
+index aadd8259..48d29dd0 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs
+@@ -41,7 +41,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+         /// </summary>
+         [HttpPost("players/{playerIdStr}/guildSearch")]
+         [Consumes("application/json")]
+-        [RequirePermission(MetaplayPermissions.ApiPlayersGuildTools)]
++        [RequirePermission(MetaplayPermissions.DashboardView)]
+         public async Task<ActionResult<GuildSearchReturn>> DoGuildSearch(string playerIdStr)
+         {
+             // Parse parameters
+@@ -49,6 +49,9 @@ namespace Metaplay.Server.AdminApi.Controllers
+             Type paramsType = IntegrationRegistry.Create<GuildSearchParamsBase>().GetType();
+             GuildSearchParamsBase requestParams = await ParseBodyAsync<GuildSearchParamsBase>(paramsType);
+ 
++            if (requestParams.SearchString == null)
++                requestParams.SearchString = string.Empty;
++
+             // Get context from player
+             InternalGuildDiscoveryPlayerContextResponse contextResponse = await EntityAskAsync(playerId, InternalGuildDiscoveryPlayerContextRequest.Instance);
+             GuildDiscoveryPlayerContextBase context = contextResponse.Result;
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs b/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs
+index 64e73242..7b222128 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs
+@@ -260,10 +260,10 @@ namespace Metaplay.Server.AdminApi
+         [Permission(DefaultRole.GameAdmin)]
+         public const string ApiPlayersToggleDebugMode = "api.players.toggle_debug_mode";
+ 
+-        [GuildsEnabledCondition]
+-        [MetaDescription("View an individual player's guild tools.")]
+-        [Permission(DefaultRole.GameAdmin, DefaultRole.CustomerSupportSenior, DefaultRole.CustomerSupportAgent)]
+-        public const string ApiPlayersGuildTools = "api.players.guild_tools";
++        // [GuildsEnabledCondition]
++        // [MetaDescription("View an individual player's guild tools.")]
++        // [Permission(DefaultRole.GameAdmin, DefaultRole.CustomerSupportSenior, DefaultRole.CustomerSupportAgent)]
++        // public const string ApiPlayersGuildTools = "api.players.guild_tools";
+ 
+         [MetaDescription("Manage an individual player's devices & social auths.")]
+         [Permission(DefaultRole.GameAdmin, DefaultRole.CustomerSupportSenior, DefaultRole.CustomerSupportAgent)]
+diff --git a/MetaplaySDK/Backend/Server/AsyncMatchmaking/AsyncMatchmakerActorBase.cs b/MetaplaySDK/Backend/Server/AsyncMatchmaking/AsyncMatchmakerActorBase.cs
+index 7b4cbf4d..66a81ed7 100644
+--- a/MetaplaySDK/Backend/Server/AsyncMatchmaking/AsyncMatchmakerActorBase.cs
++++ b/MetaplaySDK/Backend/Server/AsyncMatchmaking/AsyncMatchmakerActorBase.cs
+@@ -47,7 +47,7 @@ namespace Metaplay.Server.Matchmaking
+         [MetaDescription("How many players to persist into the database. (Max 16k)")]
+         public int      DatabaseCacheSize           { get; protected set; } = 16_000;
+         [MetaDescription("How many MMR buckets to divide the playerbase to.")]
+-        public int      MmrBucketCount              { get; protected set; } = 100;
++        public int      MmrBucketCount              { get; protected set; } = 30;
+         [MetaDescription("The minimum size for a bucket.")]
+         public int      BucketMinSize               { get; protected set; } = 20;
+         [MetaDescription("The initial size for a bucket.")]
+diff --git a/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs b/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs
+index 4627a813..e8b8be8b 100644
+--- a/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs
++++ b/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs
+@@ -422,7 +422,9 @@ namespace Metaplay.Server
+                     gameServerGooglePlaySignInOAuthClientId:                playStoreOpts.GooglePlayClientId,
+                     immutableXLinkApiUrl:                                   EthereumNetworkProperties.TryGetPropertiesForNetwork(web3Opts.ImmutableXNetwork)?.ImmutableXLinkApiUrl,
+                     gameEnvironment:                                        envOpts.Environment,
+-                    gameTimeOffset:                                         GlobalStateProxyActor.ActiveGameTimeOffset.Get().Offset
++                    gameTimeOffset:                                         GlobalStateProxyActor.ActiveGameTimeOffset.Get().Offset,
++                    // METAPLAY_CHANGED: Added flag
++                    enableDevelopmentFeatures:                              envOpts.EnableDevelopmentFeatures
+                     )));
+         }
+ 
+diff --git a/MetaplaySDK/Backend/Server/Metaplay.Server.csproj b/MetaplaySDK/Backend/Server/Metaplay.Server.csproj
+index 773a32d0..bc86d054 100644
+--- a/MetaplaySDK/Backend/Server/Metaplay.Server.csproj
++++ b/MetaplaySDK/Backend/Server/Metaplay.Server.csproj
+@@ -1,4 +1,4 @@
+-﻿<Project Sdk="Microsoft.NET.Sdk">
++<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+     <TargetFrameworks>net8.0</TargetFrameworks>
+diff --git a/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiJsonSerializer.cs b/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiJsonSerializer.cs
+index 2e3731be..5397ee79 100644
+--- a/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiJsonSerializer.cs
++++ b/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiJsonSerializer.cs
+@@ -157,11 +157,9 @@ namespace Metaplay.Server.AdminApi
+         static Dictionary<string, Type> GetValidDeserializationTargets()
+         {
+             Dictionary<string, Type> types = new Dictionary<string, Type>();
+-            foreach (Type type in TypeScanner.GetAllTypes())
++            foreach (MetaSerializableType type in MetaSerializerTypeRegistry.Instance.AllTypes)
+             {
+-                if (!IsAllowedDeserializationTarget(type))
+-                    continue;
+-                types.Add(type.FullName, type);
++                types.Add(type.Type.FullName, type.Type);
+             }
+ 
+             return types;
+diff --git a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs
+index 348e92bc..711bc900 100644
+--- a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs
++++ b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs
+@@ -185,6 +185,7 @@ namespace Metaplay.Server.Forms
+             {
+                 MetaFormConfigReferenceContentType refType = type as MetaFormConfigReferenceContentType;
+                 schema.Add("configLibrary", refType.ConfigLibrary);
++                schema.Add("possibleValues", new JArray(refType.ConfigEntries));
+             }
+             else if (type.TypeKind == MetaFormContentTypeKind.Nullable)
+             {
+diff --git a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs
+index c40b161f..ea415c0a 100644
+--- a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs
++++ b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs
+@@ -230,10 +230,12 @@ namespace Metaplay.Server.Forms
+     public class MetaFormConfigReferenceContentType : MetaFormContentType
+     {
+         public string ConfigLibrary { get; private set; }
++        public string[] ConfigEntries { get; private set; }
+ 
+-        public MetaFormConfigReferenceContentType(MetaFormContentTypeKind typeKind, MetaSerializableType serializableType, string configLibrary) : base(typeKind, serializableType)
++        public MetaFormConfigReferenceContentType(MetaFormContentTypeKind typeKind, MetaSerializableType serializableType, string configLibrary, string[] configEntries) : base(typeKind, serializableType)
+         {
+             ConfigLibrary = configLibrary;
++            ConfigEntries = configEntries;
+         }
+     }
+ 
+@@ -467,7 +469,10 @@ namespace Metaplay.Server.Forms
+                     }
+                     else if (kind == MetaFormContentTypeKind.StringId)
+                     {
+-                        MetaFormConfigLibraryItemReference libraryRefAttr = serializableType.Type.GetCustomAttribute<MetaFormConfigLibraryItemReference>();
++                        MetaFormConfigLibraryItemReference        libraryRefAttr = serializableType.Type.GetCustomAttribute<MetaFormConfigLibraryItemReference>();
++
++                        // METAPLAY_CHANGED: add support for static list of values
++                        MetaFormConfigLibraryItemEntriesAttribute libraryEntriesAttr = serializableType.Type.GetCustomAttribute<MetaFormConfigLibraryItemEntriesAttribute>();
+ 
+                         string libraryName;
+                         if (libraryRefAttr != null)
+@@ -476,7 +481,7 @@ namespace Metaplay.Server.Forms
+                             libraryName = TryFindConfigLibrary(x => x.GenericTypeArguments[0] == serializableType.Type);
+ 
+                         // \TODO: don't return config reference type when string id is not config reference!
+-                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName);
++                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName, libraryEntriesAttr?.Values);
+                     }
+                     else if (kind == MetaFormContentTypeKind.ConfigLibraryItem)
+                     {
+@@ -486,7 +491,7 @@ namespace Metaplay.Server.Forms
+ 
+                         string libraryName = TryFindConfigLibrary(x => x.GenericTypeArguments[1] == configItemType);
+ 
+-                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName);
++                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName, null);
+                     }
+                     else if (kind == MetaFormContentTypeKind.Nullable)
+                     {
+diff --git a/MetaplaySDK/Backend/ServerShared/Metaplay.ServerShared.csproj b/MetaplaySDK/Backend/ServerShared/Metaplay.ServerShared.csproj
+index 7c5a3f45..2a223dc3 100644
+--- a/MetaplaySDK/Backend/ServerShared/Metaplay.ServerShared.csproj
++++ b/MetaplaySDK/Backend/ServerShared/Metaplay.ServerShared.csproj
+@@ -1,4 +1,4 @@
+-﻿<Project Sdk="Microsoft.NET.Sdk">
++<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+     <TargetFrameworks>net8.0</TargetFrameworks>
+diff --git a/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs b/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs
+index 54d923ed..6c1f189e 100644
+--- a/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs
++++ b/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs
+@@ -10,7 +10,10 @@ namespace Metaplay.Core
+     {
+         Local,
+         Development,
++        // METAPLAY_CHANGED: Demo, Sales
++        Demo,
++        Sales,
+         Staging,
+-        Production
++        Production,
+     }
+ }
+diff --git a/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs b/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs
+index b9b29cd1..7cea767c 100644
+--- a/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs
++++ b/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs
+@@ -10,6 +10,7 @@ using System.Diagnostics;
+ using System.Globalization;
+ using System.IO;
+ using System.Linq;
++using System.Net.Http;
+ using System.Reflection;
+ using System.Text;
+ using System.Threading;
+@@ -1365,6 +1366,26 @@ namespace Metaplay.Core.Config
+             if (buildLog.HasErrors())
+                 throw new GameConfigBuildFailed(new GameConfigBuildReport(buildLog.Messages, validationResults: null));
+ 
++            // METAPLAY_CHANGED: Google sheet preprocess hook
++            // Preprocess Google sheet sources
++            if (buildParams.DefaultSource is GoogleSheetBuildSource googleSheetSource)
++            {
++                if (!string.IsNullOrEmpty(googleSheetSource.PreProcessUrl))
++                {
++                    using HttpClient http = new HttpClient();
++                    {
++                        try
++                        {
++                            await http.GetAsync(googleSheetSource.PreProcessUrl);
++                        }
++                        catch (Exception ex)
++                        {
++                            throw new InvalidOperationException($"Failed to preprocess Google sheet at {googleSheetSource.PreProcessUrl}", ex);
++                        }
++                    }
++                }
++            }
++
+             // Run actual build (\note outputs errors into buildLog)
+             try
+             {
+@@ -1784,10 +1805,10 @@ namespace Metaplay.Core.Config
+             return input is TBuildParams ? input : null;
+         }
+ 
+-        protected override Task BuildAsync(IGameConfigBuilder<TSharedConfig> shared, IGameConfigBuilder<TServerConfig> server)
++        protected override async Task BuildAsync(IGameConfigBuilder<TSharedConfig> shared, IGameConfigBuilder<TServerConfig> server)
+         {
+             // Call legacy build entrypoint for backwards compatibility
+-            return Build(shared, server, BuildParameters);
++            await Build(shared, server, BuildParameters);
+         }
+ 
+         protected virtual Task Build(IGameConfigBuilder<TSharedConfig> shared, IGameConfigBuilder<TServerConfig> server, TBuildParams buildParams)
+diff --git a/MetaplaySDK/Client/Core/Config/GameConfigBuildInputs.cs b/MetaplaySDK/Client/Core/Config/GameConfigBuildInputs.cs
+index ba164756..a5bba79c 100644
+--- a/MetaplaySDK/Client/Core/Config/GameConfigBuildInputs.cs
++++ b/MetaplaySDK/Client/Core/Config/GameConfigBuildInputs.cs
+@@ -65,13 +65,22 @@ namespace Metaplay.Core.Config
+             DisplayHint = "ID of the Google Spreadsheet to use as a data source.",
+             DisplayPlaceholder = "Enter Google Spreadsheet ID")]
+         public string SpreadsheetId { get; private set; }
++        // METAPLAY_CHANGED: Google sheet preprocess hook
++        [MetaMember(3),
++         MetaFormDisplayProps(
++             displayName: "Google AppScript WebApp URL",
++             DisplayHint = "URL to invoke the Google AppScript WebApp to preprocess the data.",
++             DisplayPlaceholder = "Enter WebApp GET URL")]
++        public string PreProcessUrl { get; private set; }
+ 
+         GoogleSheetBuildSource() { }
+ 
+-        public GoogleSheetBuildSource(string name, string spreadsheetId)
++        // METAPLAY_CHANGED: Google sheet preprocess hook
++        public GoogleSheetBuildSource(string name, string spreadsheetId, string preProcessUrl = "")
+         {
+             Name    = name;
+             SpreadsheetId = spreadsheetId;
++            PreProcessUrl = preProcessUrl;
+         }
+ 
+         public override string DisplayName => Name;
+diff --git a/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs b/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs
+index 3cce334e..cea97f64 100644
+--- a/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs
++++ b/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs
+@@ -115,8 +115,80 @@ namespace Metaplay.Core.Config
+                             newCol++;
+                         }
+                     }
++
+                     row.RemoveRange(newCol, row.Count - newCol);
+                 }
++
++            }
++
++            // METAPLAY_CHANGED: Added custom processing
++            CopyPreviousValuesToEmptyCells(spreadsheetContent);
++            RemoveEmptyRows(spreadsheetContent);
++        }
++
++        // METAPLAY_CHANGED: Added custom method
++        static void CopyPreviousValuesToEmptyCells(SpreadsheetContent sheet)
++        {
++            for (int rowNdx = 1; rowNdx < sheet.Cells.Count; rowNdx++)
++            {
++                List<SpreadsheetCell> previousRow = sheet.Cells[rowNdx - 1];
++                List<SpreadsheetCell> row         = sheet.Cells[rowNdx];
++                if (previousRow[0].Value == row[0].Value)
++                {
++                    for (int colNdx = 0; colNdx < previousRow.Count; colNdx++)
++                    {
++                        if (colNdx >= row.Count)
++                        {
++                            row.Add(new SpreadsheetCell("", rowNdx, colNdx));
++                        }
++
++                        string value = row[colNdx].Value;
++                        if (value.Length == 0 && rowNdx > 1)
++                        {
++                            row[colNdx] = colNdx < previousRow.Count ? previousRow[colNdx] : new SpreadsheetCell("", rowNdx, colNdx);
++                        }
++
++                        if (value.Equals("-"))
++                        {
++                            row[colNdx] = new SpreadsheetCell("", rowNdx, colNdx);
++                        }
++                    }
++                }
++                else
++                {
++                    for (int colNdx = 0; colNdx < row.Count; colNdx++)
++                    {
++                        string value = row[colNdx].Value;
++                        if (value.Equals("-"))
++                        {
++                            row[colNdx] = new SpreadsheetCell("", rowNdx, colNdx);
++                        }
++                    }
++                }
++            }
++        }
++
++        // METAPLAY_CHANGED: Added custom method
++        // As a result of CopyPreviousValuesToEmptyCells some rows may be left completely empty. Remove them.
++        static void RemoveEmptyRows(SpreadsheetContent sheet)
++        {
++            for (int rowNdx = 1; rowNdx < sheet.Cells.Count; rowNdx++)
++            {
++                List<SpreadsheetCell> row   = sheet.Cells[rowNdx];
++                bool                  empty = true;
++                foreach (SpreadsheetCell cell in row)
++                {
++                    if (cell.Value.Length > 0)
++                    {
++                        empty = false;
++                        break;
++                    }
++                }
++
++                if (empty)
++                {
++                    sheet.Cells.RemoveAt(rowNdx);
++                }
+             }
+         }
+ 
+diff --git a/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs b/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs
+index aadb2ef3..507369e1 100644
+--- a/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs
++++ b/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs
+@@ -116,6 +116,17 @@ namespace Metaplay.Core.Forms
+         }
+     }
+ 
++    [AttributeUsage(AttributeTargets.Class)]
++    public class MetaFormConfigLibraryItemEntriesAttribute : Attribute
++    {
++        public string[] Values { get; }
++
++        public MetaFormConfigLibraryItemEntriesAttribute(string[] values)
++        {
++            Values = values;
++        }
++    }
++
+     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+     public class MetaFormNotEditableAttribute : MetaFormFieldDecoratorBaseAttribute
+     {
+diff --git a/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs b/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs
+index 58db2421..ceaaa786 100644
+--- a/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs
++++ b/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs
+@@ -367,8 +367,10 @@ namespace Metaplay.Core.Message
+             /// This is zero if no time skip has been applied.
+             /// </summary>
+             [MetaMember(9)] public MetaDuration GameTimeOffset;
++            // METAPLAY_CHANGED: Added flag (rename if/when upstreaming)
++            [MetaMember(99)] public bool EnableDevelopmentFeatures;
+ 
+-            public ServerOptions(int pushUploadPercentageSessionStartFailedIncidentReport, bool enableWireCompression, MetaDuration deletionRequestSafetyDelay, string gameServerGooglePlaySignInOAuthClientId, string immutableXLinkApiUrl, string gameEnvironment, MetaDuration gameTimeOffset)
++            public ServerOptions(int pushUploadPercentageSessionStartFailedIncidentReport, bool enableWireCompression, MetaDuration deletionRequestSafetyDelay, string gameServerGooglePlaySignInOAuthClientId, string immutableXLinkApiUrl, string gameEnvironment, MetaDuration gameTimeOffset, bool enableDevelopmentFeatures)
+             {
+                 PushUploadPercentageSessionStartFailedIncidentReport = pushUploadPercentageSessionStartFailedIncidentReport;
+                 EnableWireCompression = enableWireCompression;
+@@ -377,6 +379,8 @@ namespace Metaplay.Core.Message
+                 ImmutableXLinkApiUrl = immutableXLinkApiUrl;
+                 GameEnvironment = gameEnvironment;
+                 GameTimeOffset = gameTimeOffset;
++                // METAPLAY_CHANGED: Added flag
++                EnableDevelopmentFeatures = enableDevelopmentFeatures;
+             }
+         }
+ 
+diff --git a/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs b/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs
+index e7a4a10b..95ae444f 100644
+--- a/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs
++++ b/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs
+@@ -726,5 +726,10 @@ namespace Metaplay.Core.Offers
+         {
+             return new DefaultMetaOfferPerPlayerState();
+         }
++
++        public override bool PlacementIsAvailable(IPlayerModelBase player, OfferPlacementId placement)
++        {
++            return true;
++        }
+     }
+ }
+diff --git a/MetaplaySDK/Client/Core/Parser/ConfigLexer.cs b/MetaplaySDK/Client/Core/Parser/ConfigLexer.cs
+index bb8daf88..2284b521 100644
+--- a/MetaplaySDK/Client/Core/Parser/ConfigLexer.cs
++++ b/MetaplaySDK/Client/Core/Parser/ConfigLexer.cs
+@@ -52,6 +52,8 @@ namespace Metaplay.Core
+             RightBrace,
+             Colon,
+             Hash,
++            // METAPLAY_CHANGED: Added extra symbols
++            DollarSign,
+         }
+ 
+         /// <summary>
+@@ -167,6 +169,8 @@ namespace Metaplay.Core
+             new TokenSpec(new Regex(@"\G}", RegexOptions.Compiled), TokenType.RightBrace),
+             new TokenSpec(new Regex(@"\G:", RegexOptions.Compiled), TokenType.Colon),
+             new TokenSpec(new Regex(@"\G#", RegexOptions.Compiled), TokenType.Hash),
++            // METAPLAY_CHANGED: Added extra symbols
++            new TokenSpec(new Regex(@"\$", RegexOptions.Compiled), TokenType.DollarSign),
+         };
+ 
+         public readonly string  Input           = "";
+diff --git a/MetaplaySDK/Client/Core/Player/IPlayerModel.cs b/MetaplaySDK/Client/Core/Player/IPlayerModel.cs
+index 1fa6cb73..7c427295 100644
+--- a/MetaplaySDK/Client/Core/Player/IPlayerModel.cs
++++ b/MetaplaySDK/Client/Core/Player/IPlayerModel.cs
+@@ -105,6 +105,8 @@ namespace Metaplay.Core.Player
+         void OnNewInGameMail                (PlayerMailItem mail) { }
+ 
+         void GotLiveOpsEventUpdate          (PlayerLiveOpsEventModel model) { }
++        // METAPLAY_CHANGED: Added new hook
++        void OnMailStateChanged             (PlayerMailItem mail) { }
+     }
+ 
+     /// <summary>
+diff --git a/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs b/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs
+index 886057a5..ff254a33 100644
+--- a/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs
++++ b/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs
+@@ -89,6 +89,8 @@ namespace Metaplay.Core.Player
+             {
+                 player.Log.Info("Consuming mail: {Mail}", PrettyPrint.Compact(mail.Contents));
+                 mail.ConsumeRewards(player);
++                // METAPLAY_CHANGED: Added hook
++                player.ClientListenerCore.OnMailStateChanged(mail);
+             }
+ 
+             return MetaActionResult.Success;
+@@ -119,6 +121,8 @@ namespace Metaplay.Core.Player
+             if (commit)
+             {
+                 mail.ToggleIsRead(player, IsRead);
++                // METAPLAY_CHANGED: Added hook
++                player.ClientListenerCore.OnMailStateChanged(mail);
+             }
+ 
+             return MetaActionResult.Success;
+diff --git a/MetaplaySDK/Client/Core/Player/PlayerCoreEvents.cs b/MetaplaySDK/Client/Core/Player/PlayerCoreEvents.cs
+index 5d927585..52997a27 100644
+--- a/MetaplaySDK/Client/Core/Player/PlayerCoreEvents.cs
++++ b/MetaplaySDK/Client/Core/Player/PlayerCoreEvents.cs
+@@ -322,6 +322,8 @@ namespace Metaplay.Core.Player
+         [MetaMember(5)] public string                       PlatformProductId       { get; private set; }
+         [MetaMember(6)] public F64                          ReferencePrice          { get; private set; }
+         [MetaMember(7)] public string                       GameProductAnalyticsId  { get; private set; }
++        // METAPLAY_CHANGED: Added ignore -- should upstream?
++        [FirebaseAnalyticsIgnore] // unsupported aggregate type
+         [MetaMember(12)] public InAppPurchasePaymentType?   PaymentType             { get; private set; }
+         [FirebaseAnalyticsIgnore] // unsupported aggregate type
+         [MetaMember(8)] public PurchaseAnalyticsContext     PurchaseContext         { get; private set; }
+@@ -422,6 +424,8 @@ namespace Metaplay.Core.Player
+         [MetaMember(5)] public string                       PlatformProductId       { get; private set; }
+         [MetaMember(6)] public F64                          ReferencePrice          { get; private set; }
+         [MetaMember(7)] public string                       GameProductAnalyticsId  { get; private set; }
++        // METAPLAY_CHANGED: Added ignore -- should upstream?
++        [FirebaseAnalyticsIgnore] // unsupported aggregate type
+         [MetaMember(10)] public InAppPurchasePaymentType?   PaymentType             { get; private set; }
+         [FirebaseAnalyticsIgnore] // unsupported aggregate type
+         [MetaMember(8)] public PurchaseAnalyticsContext     PurchaseContext         { get; private set; }
+diff --git a/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs b/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs
+index 9f7b9378..e706f5dc 100644
+--- a/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs
++++ b/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs
+@@ -82,7 +82,8 @@ namespace Metaplay.Core.Player
+         [MetaMember(49)] int                                                                        _baseFixupVersion           = 0; // \note Initialize to 0 for existing players from before this field was added. For new players, this is set to CurrentBaseFixupVersion in InitializeNewPlayerModel.
+ 
+         [MetaMember(1), Transient, ExcludeFromGdprExport] public MetaTime                           TimeAtFirstTick             { get; private set; }   // Model's logical time at CurrentTick 0, set by server to keep determinism. Used together with CurrentTick and the ticks-per-second constant to calculate the current logic time (CurrentTime).
+-        [MetaMember(2), Transient, ExcludeFromGdprExport] public long                               CurrentTick                 { get; private set; }   // Current tick, since start of session. Advanced at rate of TicksPerSecond.
++        // METAPLAY_CHANGED: Allow modifying CurrentTick
++        [MetaMember(2), Transient, ExcludeFromGdprExport] public long                               CurrentTick                 { get; set; }   // Current tick, since start of session. Advanced at rate of TicksPerSecond.
+         [MetaMember(3), Transient, NoChecksum, ExcludeFromGdprExport] public bool                   IsOnline                    { get; set; }   // Is the player currently online?
+         [MetaMember(8), Transient, NoChecksum, ExcludeFromGdprExport] public string                 SessionDeviceGuid           { get; set; }   // Device being used during current session, set at login.
+         [MetaMember(40), Transient, NoChecksum, ExcludeFromGdprExport] public SessionToken          SessionToken                { get; set; }   // Token of the current session, set at login.
+diff --git a/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs b/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs
+index ce418941..0060e73a 100644
+--- a/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs
++++ b/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs
+@@ -13,6 +13,8 @@ using System.Linq;
+ namespace Metaplay.Core.Tests
+ {
+     [TestFixture]
++    // METAPLAY_CHANGED: disabled due to customization
++    [Ignore("Disabled due to SDK customization for 'inherit empty cells from above' behavior")]
+     public class GameConfigParsingTests
+     {
+         public static class Helper
+diff --git a/MetaplaySDK/Client/Unity/DefaultIntegration/DefaultOfflineServer.cs b/MetaplaySDK/Client/Unity/DefaultIntegration/DefaultOfflineServer.cs
+index a97f9da2..f891ec5d 100644
+--- a/MetaplaySDK/Client/Unity/DefaultIntegration/DefaultOfflineServer.cs
++++ b/MetaplaySDK/Client/Unity/DefaultIntegration/DefaultOfflineServer.cs
+@@ -326,7 +326,9 @@ namespace Metaplay.Unity
+                             gameServerGooglePlaySignInOAuthClientId:                null,
+                             immutableXLinkApiUrl:                                   "https://link.sandbox.x.immutable.com",
+                             gameEnvironment:                                        "offline",
+-                            gameTimeOffset:                                         MetaDuration.Zero)
++                            gameTimeOffset:                                         MetaDuration.Zero,
++                            // METAPLAY_CHANGED: Added flag -- does it make sense to be always true in offline?
++                            enableDevelopmentFeatures:                              true)
+                         ));
+                     break;
+                 }
+diff --git a/MetaplaySDK/Dockerfile.server b/MetaplaySDK/Dockerfile.server
+index 117e21b6..82c7670e 100644
+--- a/MetaplaySDK/Dockerfile.server
++++ b/MetaplaySDK/Dockerfile.server
+@@ -10,7 +10,8 @@ ARG PROJECT_ROOT=.
+ # Userland Backend directory, relative to PROJECT_ROOT
+ ARG BACKEND_DIR=Backend
+ # Directory where shared code is located, relative to PROJECT_ROOT
+-ARG SHARED_CODE_DIR=Assets/SharedCode
++# METAPLAY_CHANGED: Customized SharedCode directory
++ARG SHARED_CODE_DIR=Assets/Code/GameLogic
+ # Directory for (low-stakes) server secrets, relative to the invocation directory
+ ARG SERVER_SECRETS_DIR=$PROJECT_ROOT/$BACKEND_DIR/Server/Secrets
+ # Directory for server game configs, relative to the invocation directory
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/.eslintrc.js b/MetaplaySDK/Frontend/BrowserSdk/.eslintrc.js
+new file mode 100644
+index 00000000..8fc34c14
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/.eslintrc.js
+@@ -0,0 +1,5 @@
++module.exports = {
++  extends: [
++    '@metaplay',
++  ]
++}
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/LICENSE b/MetaplaySDK/Frontend/BrowserSdk/LICENSE
+new file mode 100644
+index 00000000..e0bfdb36
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/LICENSE
+@@ -0,0 +1 @@
++This module and all files within are distributed under the Metaplay SDK Software License.
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/moon.yml b/MetaplaySDK/Frontend/BrowserSdk/moon.yml
+new file mode 100644
+index 00000000..f2522f24
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/moon.yml
+@@ -0,0 +1,28 @@
++type: library
++language: javascript
++tags:
++  - public-package
++
++project:
++  description: JavaScript code for web browsers to interact with Unity web builds and Metaplay's company accounts.
++  maintainers:
++    - "Teemu"
++    - "Paul"
++
++tasks:
++  lint:
++    command: eslint . --fix
++    inputs:
++      - "src/**/*.{ts,d.ts}"
++      - "*.{js,ts,cjs}"
++      - /MetaplaySDK/Frontend/EslintConfig/index.js
++
++  typecheck:
++    command: tsc --noEmit
++    deps:
++      - lint # Don't typecheck if the code doesn't lint.
++      - ^:typecheck
++    inputs:
++      - "src/**/*.{ts,d.ts}"
++      - "*.{json,ts,d.ts}"
++      - /MetaplaySDK/Frontend/TypescriptConfig/tsconfig.json
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/package.json b/MetaplaySDK/Frontend/BrowserSdk/package.json
+new file mode 100644
+index 00000000..595c4c9d
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/package.json
+@@ -0,0 +1,12 @@
++{
++  "name": "@metaplay/browser-sdk",
++  "version": "1.0.0",
++  "description": "JavaScript code for web browsers to interact with Unity web builds and Metaplay's company accounts.",
++  "main": "src/index.ts",
++  "devDependencies": {
++    "@metaplay/eslint-config": "workspace:^",
++    "typescript": "^5.1.6"
++  },
++  "license": "SEE LICENSE IN LICENSE",
++  "private": true
++}
+\ No newline at end of file
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/src/companyAccountsUtils.ts b/MetaplaySDK/Frontend/BrowserSdk/src/companyAccountsUtils.ts
+new file mode 100644
+index 00000000..7cc35055
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/src/companyAccountsUtils.ts
+@@ -0,0 +1,102 @@
++// This file is part of Metaplay SDK which is released under the Metaplay SDK License.
++
++/**
++ * Information about player's account in the company accounts API.
++ */
++export interface CompanyAccountInfo {
++  /**
++   * Player's company account ID.
++   */
++  accountId: string
++  // TODO: add at least the following fields:
++  // - accountName
++}
++
++/**
++ * Perform a login via a redirect to the login page.
++ */
++export function loginWithRedirect (accountApiUrl: string) {
++  const url = `${accountApiUrl}/ingameLogin?return_to=${window.location.href}`
++  window.location.href = url
++}
++
++/**
++ * Perform a login via a popup window.
++ * @param accountApiUrl The URL of the company accounts API.
++ * @param width Optional: The width of the popup window. Defaults to 600.
++ * @param height Optional: The height of the popup window. Defaults to 600.
++ * @returns The popup window object.
++ */
++export function loginWithPopup (accountApiUrl: string, width?: number, height?: number) {
++  const defaultWidth = 400
++  const defaultHeight = 520
++
++  const popupLoginUrl = `${accountApiUrl}/ingameLogin?return_to=${accountApiUrl}/popupFlowCompleted`
++
++  const left = (screen.width - (width ?? defaultWidth)) / 2
++  const top = (screen.height - (height ?? defaultHeight)) / 2
++  const loginPopup = window.open(popupLoginUrl, 'loginPopupWindow', `modal=yes, left=${left}, top=${top}, width=${width ?? defaultWidth}, height=${height ?? defaultHeight}, toolbar=no, resizable=no`)
++
++  if (!loginPopup) throw Error('Unable to open the login popup window.')
++
++  loginPopup.focus()
++  loginPopup.postMessage('Metaplay:Hello', '*')
++
++  return loginPopup
++}
++
++/**
++ * Perform a logout via a redirect.
++ */
++export function logoutWithRedirect (accountApiUrl: string) {
++  const logoutUrl = `${accountApiUrl}/logout?return_to=${window.location.href}`
++  window.location.href = logoutUrl
++}
++
++/**
++ * Fetch currently logged in user's account info from the company account API.
++ * Note: This API highly likely evolve as we figure out what is the minimum amount of information we need. There might be another API for fetching the full account info.
++ */
++export async function getCompanyAccountInfo (accoutApiUrl: string): Promise<CompanyAccountInfo | undefined> {
++  try {
++    // Rely on browser cache to avoid unnecessary fetches.
++    const response = await fetch(`${accoutApiUrl}/accountInfo`, {
++      method: 'GET',
++      mode: 'cors',
++      credentials: 'include',
++      cache: 'default'
++    })
++
++    // TODO: Error handling.
++
++    const accountInfo = await response.json() as CompanyAccountInfo
++
++    // Note: The account ID property is null if the user is not logged in. We prefer to return undefined in that case.
++    if (!accountInfo.accountId) return undefined
++    return accountInfo
++  } catch (error) {
++    throw Error(`Failed to get account info from '${accoutApiUrl}/accountInfo'. Error: ${error}`)
++  }
++}
++
++/**
++ * Fetch a game server access token from the company accounts API.
++ * @returns Promise of the token ID string.
++ */
++export async function getGameServerAccessToken (accoutApiUrl: string, projectName: string, projectEnvironment: string): Promise<string> {
++  // Rely on browser cache to avoid unnecessary fetches.
++  const tokenResponse = await fetch(`${accoutApiUrl}/tokenForGameWebAccess?project=${projectName}&env=${projectEnvironment}`, {
++    method: 'GET',
++    mode: 'cors',
++    credentials: 'include',
++    cache: 'default'
++  })
++
++  // Check the response.
++  if (tokenResponse.status === 200) {
++    const token = await tokenResponse.text()
++    return token
++  } else {
++    throw Error(`Unable to get an access token from AccountApi to access the game server. AccountApi responded with code ${tokenResponse.status}`)
++  }
++}
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/src/index.ts b/MetaplaySDK/Frontend/BrowserSdk/src/index.ts
+new file mode 100644
+index 00000000..a1ba752a
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/src/index.ts
+@@ -0,0 +1,191 @@
++// This file is part of Metaplay SDK which is released under the Metaplay SDK License.
++
++import {
++  type UnityRuntime,
++  type UnityRuntimeOptions,
++  type UnityRuntimeBridge,
++  type GameSpecificApiBridges,
++  initializeUnityRuntimeBridge,
++} from './unityRuntimeUtils'
++
++import {
++  type CompanyAccountInfo,
++  getCompanyAccountInfo,
++  getGameServerAccessToken,
++  loginWithPopup as internalLoginWithPopup,
++  loginWithRedirect as internalLoginWithRedirect,
++  logoutWithRedirect as internalLogoutWithRedirect,
++} from './companyAccountsUtils'
++
++export type { UnityRuntime, GameSpecificApiBridges } from './unityRuntimeUtils'
++export type { CompanyAccountInfo } from './companyAccountsUtils'
++
++/**
++ * Initialization options for the Unity runtime bridge.
++ */
++export type UnityRuntimeInitializationOptions = Omit<UnityRuntimeOptions, 'companyAccountsSelfServeUrl'> // Server url is omited here and instead we use the one from the browser sdk client to avoid typos.
++
++/**
++ * Initializes and returns the browser SDK client. Ideally you should have only one instance
++ * of the client in your web application and use your preferred state management pattern to share it between components.
++ * @param companyAccountsSelfServeUrl Full URL to the company accounts server.
++ */
++export async function initializeBrowserSdkClient (companyAccountsSelfServeUrl: string) {
++  // Local state ------------------------------------------------------------------------------------------------------
++
++  let loginPopup: Window | undefined
++
++  /**
++   * Internal instance of the current company account info. Undefined if not logged in.
++   */
++  let currentAccount: CompanyAccountInfo | undefined
++
++  /**
++   * Internal instance of the Unity runtime bridge. This is initialized manually if needed.
++   */
++  let unityRuntimeBridge: UnityRuntimeBridge<unknown> | undefined
++
++  /**
++   * Userland event handler for company account changes.
++   */
++  let onAccountChanged: ((accountInfo: CompanyAccountInfo | undefined) => void) | undefined
++
++  /**
++   * Helper function to get the Unity runtime bridge after it has been initialized. Throws an error if the bridge has not been initialized yet.
++   */
++  function getUnityRuntimeBridge () {
++    if (!unityRuntimeBridge) throw new Error('Unity runtime bridge has not been initialized yet. You need to call `initializeUnityRuntimeBridge()` first.')
++    return unityRuntimeBridge
++  }
++
++  // Initialization ---------------------------------------------------------------------------------------------------
++
++  // Add a listener for messages from the login popup.
++  window.addEventListener('message', function (event) {
++    if (event.data === 'Metaplay:LoginCompleted') {
++      loginPopup?.close()
++      loginPopup = undefined
++      void refreshCompanyAccountInfo()
++    }
++  })
++
++  // We may be already logged in here because of redirects or a previous login. Refresh immediately.
++  await refreshCompanyAccountInfo()
++
++  // Functions ----------------------------------------------------------------------------------------------------------
++
++  /**
++   * Make an authenticated fetch() request to the game server by first getting a fresh access token from the company accounts API.
++   * @param url Full path to the game server endpoint to call.
++   * @param projectName Name of the project to get the access token for.
++   * @param projectEnvironment Name of the project environment to get the access token for.
++   * @param params Optional: Parameters to pass to the `Fetch()` call.
++   * @returns Result of the fetch.
++   */
++  // Note: EsLint is disabled here because it was confused about the `RequestInit` type.
++  // eslint-disable-next-line no-undef
++  async function fetchResourceFromGameServerByUrl (url: string, projectName: string, projectEnvironment: string, userParams: RequestInit = {}): Promise<Response> {
++    // Ensure we have a fresh access token. This gets cached in the browser so it's okay to do it for each request.
++    const accessToken = await getGameServerAccessToken(companyAccountsSelfServeUrl, projectName, projectEnvironment)
++
++    // Include default params and inject the authorization token
++    // Note: EsLint is disabled here because it was confused about the `RequestInit` type.
++    // eslint-disable-next-line no-undef
++    const params: RequestInit = {
++      mode: 'cors',
++      credentials: 'include',
++      cache: 'default',
++      ...userParams,
++      headers: { ...userParams.headers ?? {}, Authorization: `Bearer ${accessToken}` }
++    }
++
++    // Make the request and return the raw result.
++    return await fetch(url, params)
++  }
++
++  /**
++   * Refresh current company account info by fetching new data from the accounts API and passing messages to listeners.
++   */
++  async function refreshCompanyAccountInfo () {
++    // Get new account info.
++    const newAccount = await getCompanyAccountInfo(companyAccountsSelfServeUrl)
++
++    // TODO: Error handling.
++
++    // If the account has changed...
++    if (newAccount?.accountId !== currentAccount?.accountId) {
++      // Save new info.
++      currentAccount = newAccount
++
++      // TODO: This is not assigned anywhere. Should it? Is this just for the cache? If so, we should not await it.
++      // await getGameServerAccessToken(companyAccountsSelfServeUrl, options.projectName, options.projectEnvironment)
++
++      // Inform the unity runtime listener.
++      if (unityRuntimeBridge) {
++        unityRuntimeBridge.CompanyAccountWebGLApiBridge.AccountChanged('')
++      }
++
++      // Inform browser listener.
++      if (onAccountChanged) {
++        onAccountChanged(currentAccount)
++      }
++    }
++
++    return currentAccount
++  }
++
++  // Event handling functions -------------------------------------------------------------------------------------------
++
++  /**
++   * Add a function that gets called on account changes. Remember to call `unsubscribeFromEvents` manually when the subscriber is no longer needed.
++   * @param eventHandler The event handler function to call when account changes occur.
++   * @returns The current state of the account at the time of subscription. Use this as the initial state in your app. Returns `undefined` if the account is not logged in.
++   */
++  function subscribeToAccountChanged (_onAccountChanged: (accountInfo: CompanyAccountInfo | undefined) => void): CompanyAccountInfo | undefined {
++    // Save the event handler.
++    onAccountChanged = _onAccountChanged
++
++    return currentAccount
++  }
++
++  /**
++   * Unsubscribe from receiving events.
++   * @param eventHandlerId ID previously returned from `subscribeToEvents`.
++   */
++  function unsubscribeFromAccountChanged () {
++    if (!onAccountChanged) {
++      console.warn('Trying to unsubscribe from account changes but no event handler was registered.')
++    } else {
++      onAccountChanged = undefined
++    }
++  }
++
++  // Public interface -------------------------------------------------------------------------------------------------
++
++  return {
++    /**
++     * Perform a login via a redirect to the login page.
++     */
++    loginWithRedirect: () => internalLoginWithRedirect(companyAccountsSelfServeUrl),
++    /**
++     * Perform a login via a popup window.
++     * @param width Optional: The width of the popup window. Defaults to 600.
++     * @param height Optional: The height of the popup window. Defaults to 600.
++     * @returns The popup window object.
++     */
++    loginWithPopup: (width?: number, height?: number) => {
++      loginPopup = internalLoginWithPopup(companyAccountsSelfServeUrl, width, height)
++    },
++    /**
++     * Perform a logout via a redirect.
++     */
++    logoutWithRedirect: () => internalLogoutWithRedirect(companyAccountsSelfServeUrl),
++    refreshCompanyAccountInfo,
++    subscribeToAccountChanged,
++    unsubscribeFromAccountChanged,
++    fetchResourceFromGameServerByUrl,
++    // Inject the company accounts server url into the unity runtime bridge initialization options to make sure they are the same.
++    initializeUnityRuntimeBridge: async <T>(unityRuntime: UnityRuntime, options: UnityRuntimeInitializationOptions, gameSpecificApiBridges: GameSpecificApiBridges): Promise<T> => await initializeUnityRuntimeBridge<T>(unityRuntime, { ...options, companyAccountsSelfServeUrl }, gameSpecificApiBridges),
++    getUnityRuntimeBridge,
++  }
++}
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/src/unityRuntimeUtils.ts b/MetaplaySDK/Frontend/BrowserSdk/src/unityRuntimeUtils.ts
+new file mode 100644
+index 00000000..e0a9e44a
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/src/unityRuntimeUtils.ts
+@@ -0,0 +1,148 @@
++// This file is part of Metaplay SDK which is released under the Metaplay SDK License.
++
++// Types --------------------------------------------------------------------------------------------------------------
++
++/**
++ * Configuration options for the Unity runtime bridge. These options are passed to the Unity runtime and need to match
++ * the configuration in the Unity project.
++ */
++export interface UnityRuntimeOptions {
++  gameServerSelfServeUrl: string
++  companyAccountsSelfServeUrl: string
++  projectName: string
++  projectEnvironment: string
++}
++
++/**
++ * Response object for `CompanyAccountWebGLApiBridge.GetWebTokenAsync`.
++ */
++interface GetWebTokenAsyncResponse {
++  status: number
++  content: string
++}
++
++interface UnityRuntimeBridgeCore {
++  MetaplayApp: {
++    args: UnityRuntimeOptions
++    OnInitialized?: unknown
++  } | undefined
++  CompanyAccountWebGLApiBridge: {
++    GetWebTokenAsync: () => Promise<GetWebTokenAsyncResponse>
++    OpenLoginPage: (loginServiceUrl: string) => void // TODO: needed?
++    OpenManagementPage: (managementUrl: string) => void // TODO: needed?
++    AccountChanged: (dummy: string) => void
++  }
++  BrowserSdkClient: unknown
++  IsInitialized: unknown
++}
++
++/**
++ * Metaplay's Unity runtime interface that can be called from JavaScript.
++ */
++export interface UnityRuntimeBridge<T> extends UnityRuntimeBridgeCore {}
++
++/**
++ * Game-specific API methods that are callable across the JavaScript <-> C# API bridge.
++ */
++export interface GameSpecificApiBridges {
++  [key: string]: {
++    [key: string]: (...args: any[]) => any
++  }
++}
++
++/**
++ * Interface for the Unity runtime JavaScript that gets generated during Unity WebGL build.
++ * See: https://docs.unity3d.com/Manual/webgl-templates.html
++ */
++export interface UnityRuntime {
++  /**
++   * The SetFullscreen method toggles full screen mode.
++   * @param fullscreen 1 to enable fullscreen mode, 0 to disable.
++   */
++  SetFullscreen: (fullscreen: 1 | 0) => void
++  /**
++   * The SendMessage method sends messages to the GameObjects.
++   * @param objectName Name of the object in your scene.
++   * @param methodName Name of a method in the script, currently attached to the object.
++   * @param value Optional: Data to send to the method.
++   */
++  SendMessage: (objectName: string, methodName: string, value?: string | number) => void
++  /**
++   * Use this method to quit the runtime and clean up the memory used by the Unity instance.
++   * @returns A promise that completes after the build runtime has quit.
++   */
++  Quit: () => Promise<() => void>
++  /**
++   * Access to internal modules. One of which is MetaplayApiBridge.
++   * TODO: Proper typings and naming.
++   */
++  Module: {
++    MetaplayApiBridge: UnityRuntimeBridge<unknown>
++    [name: string]: unknown
++  }
++}
++
++// Functions ----------------------------------------------------------------------------------------------------------
++
++/**
++ * Initializes the MetaplayApiBridge module in the Unity runtime and returns a local client that can be used to call methods on it.
++ * @param unityRuntime The Unity runtime object to connect to.
++ */
++export async function initializeUnityRuntimeBridge<T> (unityRuntime: UnityRuntime, options: UnityRuntimeOptions, gameApiBridges: GameSpecificApiBridges) {
++  if (!unityRuntime.Module.MetaplayApiBridge) throw Error('MetaplayApiBridge module not found in Unity runtime.')
++
++  const unityRuntimeBridge: UnityRuntimeBridge<T> = unityRuntime.Module.MetaplayApiBridge // TODO: Strong typings for this.
++
++  if (unityRuntimeBridge.MetaplayApp) throw Error('MetaplayApp already exists in the Unity runtime. Duplicate initialization?')
++  if (unityRuntimeBridge.IsInitialized) throw Error('MetaplayApiBridge already initialized in Unity runtime. Duplicate initialization?')
++
++  unityRuntimeBridge.MetaplayApp = {
++    args: options // TODO: Update options namings to match. This will break currently.
++  }
++
++  // Override the default company accounts bridge methods with the ones from the browser SDK client.
++  unityRuntimeBridge.CompanyAccountWebGLApiBridge.GetWebTokenAsync = async () => await getGameTokenAsync(options)
++
++  // Register application-specific API bridges
++  if (gameApiBridges) {
++    // \todo [petri] fix type hack (needed for the write-by-string-key)
++    const gameSpecificApiBridges = unityRuntimeBridge as unknown as GameSpecificApiBridges
++    for (const bridgeName in gameApiBridges) {
++      gameSpecificApiBridges[bridgeName] = gameApiBridges[bridgeName]
++    }
++  }
++
++  // Wait for the Unity runtime bridge to become initialized.
++  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- We know this is not null anymore.
++  await new Promise((resolve, reject) => { unityRuntimeBridge.MetaplayApp!.OnInitialized = resolve })
++
++  if (!unityRuntimeBridge.IsInitialized) throw Error('Unity runtime bridge failed to initialize.')
++
++  // TODO: is there a way to not return the whole bridge, but only the game-specific part as defined by type T?
++
++  // All done.
++  return unityRuntimeBridge as T
++}
++
++/**
++ * Replacement implementation for `CompanyAccountWebGLApiBridge.GetWebTokenAsync`.
++ * @param getWebTokenAsyncRequest Request object.
++ * @returns Response wrapped in a promise.
++ */
++async function getGameTokenAsync (options: UnityRuntimeOptions): Promise<GetWebTokenAsyncResponse> {
++  const request = `${options?.companyAccountsSelfServeUrl}/gameauthWebGameToken?project=${options?.projectName}&env=${options?.projectEnvironment}&device=none`
++  const response = await fetch(request, {
++    method: 'GET',
++    mode: 'cors',
++    credentials: 'include',
++    cache: 'default'
++  })
++
++  // TODO: Error handling.
++
++  const content = await response.text()
++  return {
++    status: response.status,
++    content,
++  }
++}
+diff --git a/MetaplaySDK/Frontend/BrowserSdk/tsconfig.json b/MetaplaySDK/Frontend/BrowserSdk/tsconfig.json
+new file mode 100644
+index 00000000..dad15ed5
+--- /dev/null
++++ b/MetaplaySDK/Frontend/BrowserSdk/tsconfig.json
+@@ -0,0 +1,19 @@
++{
++  "extends": "@metaplay/typescript-config/tsconfig.json",
++  "compilerOptions": {
++    "composite": true,
++    "declaration": true,
++    "declarationMap": true,
++    "isolatedModules": true,
++    "outDir": "../../../.moon/cache/types/MetaplaySDK/Frontend/BrowserSdk",
++    "baseUrl": "src",
++    "skipLibCheck": true,
++    "lib": [
++      "DOM",
++      "ES2022"
++    ]
++  },
++  "include": [
++    "src/**/*.ts"
++  ]
++}
+diff --git a/MetaplaySDK/Frontend/Core/src/App.vue b/MetaplaySDK/Frontend/Core/src/App.vue
+index c800bbb7..7b7055dc 100644
+--- a/MetaplaySDK/Frontend/Core/src/App.vue
++++ b/MetaplaySDK/Frontend/Core/src/App.vue
+@@ -90,6 +90,9 @@ import NewUserCard from './components/system/NewUserCard.vue'
+ import { useCoreStore } from './coreStore'
+ import { initializationStepsRunner } from './initialization'
+ 
++// METAPLAY_CHANGED: Router import added.
++import { useRouter } from 'vue-router'
++
+ const coreStore = useCoreStore()
+ const gameServerApiStore = useGameServerApiStore()
+ 
+@@ -105,6 +108,38 @@ onMounted(async () => {
+   }
+ })
+ 
++// METAPLAY_CHANGED: Following event handler added.
++/**
++ * Listen for navigation events sent from the game website.
++ */
++const router = useRouter()
++window.addEventListener('message', (event) => {
++  try {
++    const { header, type, data } = event.data
++    if (header === 'metaplay-internal' && type === 'navigate-to' && typeof data === 'string') {
++      void router.push(data)
++    }
++    if (header === 'metaplay-internal' && type === 'get-url' && event.source && event.origin) {
++      const url = window.location.href
++      event.source.postMessage({
++        header: 'metaplay-internal',
++        type: 'iframe-url',
++        data: url,
++      })
++    }
++  } catch (e) {
++    // Silently eat errors.
++  }
++})
++
++router.afterEach((to, _, __) => {
++  window.parent.postMessage({
++    header: 'metaplay-internal',
++    type: 'iframe-url',
++    data: to.path,
++  }, '*')
++})
++
+ const viewState = computed(() => {
+   if (gameServerApiStore.auth.requiresLogin) return 'login'
+   if (gameServerApiStore.auth.requiresBasicPermissions) return 'new-user'
+diff --git a/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue b/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue
+index 9f947a9d..5b548f22 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue
+@@ -14,6 +14,7 @@ MActionModal(
+   ok-button-label="Update Configuration"
+   :ok-button-disabled-tooltip="!isFormValid ? 'Variant weights must add up to 100% to proceed.' : undefined"
+   @show="resetForm"
++  confirmPermission="api.experiments.edit"
+   )
+   div(class="mb-4")
+     meta-alert(
+diff --git a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue
+index bc6e4a8f..d188e4e7 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue
+@@ -44,6 +44,7 @@ MActionModal(
+   :action="onOk"
+   :ok-button-label="!singleGameConfigWithoutContents?.isArchived ? 'Archive' : 'Unarchive'"
+   data-testid="`archive-config-${gameConfigId}`"
++  confirmPermission="api.game_config.edit"
+   )
+   //- Heading text.
+   div(v-if="!singleGameConfigWithoutContents?.isArchived")
+diff --git a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue
+index f3a876de..fd277f27 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue
+@@ -11,7 +11,7 @@ MTextButton(
+ MButton(
+   v-else
+   :disabled-tooltip="bestGuessDisallowPublishReason"
+-  permission="api.game_config.edit"
++  confirm-permission="api.game_config.edit"
+   full-width
+   @click="gameConfigPublishModal?.open()"
+   ) Publish
+diff --git a/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue b/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue
+index f66f78b2..63f9494c 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue
+@@ -23,6 +23,15 @@ div
+       @input="updateValue"
+       :data-testid="dataTestid + '-input'"
+       )
++    meta-input-select(
++      v-if="fieldSchema.possibleValues && fieldSchema.possibleValues.length > 0"
++      :value="stringValue"
++      :options="possibleValues"
++      :class="isValid ? 'border-success' : ''"
++      no-clear
++      @input="updateValue"
++      :data-testid="dataTestid + '-input'"
++      )
+     MInputText(
+       v-else
+       :model-value="stringValue"
+@@ -88,6 +97,8 @@ const possibleValues = computed(() => {
+         value: key,
+       }
+     })
++  } else if (props.fieldSchema.possibleValues) {
++    return props.fieldSchema.possibleValues.map(x => { return { id: x, value: x } })
+   } else {
+     return []
+   }
+diff --git a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionExport.vue b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionExport.vue
+index d3ff59d9..421cffd1 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionExport.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionExport.vue
+@@ -8,7 +8,7 @@ MActionModalButton(
+   ok-button-label="Download"
+   :ok-button-disabled-tooltip="disableDownloadMessage"
+   disable-safety-lock
+-  permission="api.liveops_events.export"
++  confirm-permission="api.liveops_events.export"
+   trigger-button-full-width
+   @show="onShow"
+   @hide="onHide"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionImport.vue b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionImport.vue
+index 23b61f50..619ec777 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionImport.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventActionImport.vue
+@@ -7,7 +7,7 @@ MActionModalButton(
+   trigger-button-label="Import"
+   ok-button-label="Import Events"
+   :ok-button-disabled-tooltip="!isImportValid ? 'Upload a valid file to proceed.' : undefined"
+-  permission="api.liveops_events.import"
++  confirm-permission="api.liveops_events.import"
+   trigger-button-full-width
+   @show="onShow"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue
+index a2352082..baa31738 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue
+@@ -7,7 +7,7 @@ MActionModalButton(
+   :trigger-button-label="formOptions.triggerButtonLabel"
+   :ok-button-label="formOptions.okButtonLabel"
+   :ok-button-disabled-tooltip="okButtonDisabledReason"
+-  permission="api.liveops_events.edit"
++  confirm-permission="api.liveops_events.edit"
+   trigger-button-full-width
+   @show="onShow"
+   data-testid="live-ops-event-form"
+@@ -440,6 +440,10 @@ function onShow(): void {
+ 
+   // Deserialize the initial data into the form's inputs.
+   deserialize(eventOptions)
++  
++  if (props.formMode === 'create' && eventTypeOptions.value.length > 0) {
++    onEventTypeChange(eventTypeOptions.value[1].value)
++  }
+ }
+ 
+ /**
+diff --git a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue
+index 4d83968b..be6eb3a2 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue
+@@ -43,6 +43,7 @@ MActionModal(
+   :action="onOk"
+   :ok-button-label="!singleLocalizationWithoutContents?.isArchived ? 'Archive' : 'Unarchive'"
+   data-testid="`archive-localization-${localizationId}`"
++  confirmPermission="api.localization.edit"
+   )
+   //- Heading text.
+   div(v-if="!singleLocalizationWithoutContents?.isArchived")
+diff --git a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue
+index a4d6c09e..4dc9ecf4 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue
+@@ -25,6 +25,7 @@ MActionModal(
+   ok-button-label="Publish Localization"
+   :ok-button-disabled-tooltip="validatedDisallowPublish ? 'Cannot publish a localization that contains errors.' : undefined"
+   @show="onShow"
++  confirmPermission="api.localization.edit"
+   data-testid="`publish-localization-${localizationId}`"
+   )
+   div(
+diff --git a/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue b/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue
+index a1d297fc..7565dd0e 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue
+@@ -7,7 +7,7 @@ MActionModalButton(
+   :ok-button-label="editBroadcast ? 'Update Broadcast' : 'Start Broadcast'"
+   :action-button-text="buttonText"
+   :ok-button-disabled-tooltip="okButtonDisabledReason"
+-  permission="api.broadcasts.edit"
++  confirm-permission="api.broadcasts.edit"
+   @show="resetNewBroadcast"
+   :data-testid="dataTestid"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue
+index 3694dec6..82607d0e 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue
+@@ -1,13 +1,15 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
+     modal-title="Change Banned Status"
+     :action="updateBannedStatus"
+-    :trigger-button-label="playerData.model.isBanned ? 'Un-Ban Player' : 'Ban Player'"
++    :trigger-button-label="playerData?.model?.isBanned ? 'Un-Ban Player' : 'Ban Player'"
+     variant="warning"
+     ok-button-label="Save Settings"
++    :ok-button-disabled="!isStatusChanged"
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     :ok-button-disabled-tooltip="!isStatusChanged ? `Toggle the switch to ${playerData.model.isBanned ? 'un-ban' : 'ban'} this player.` : undefined"
+     permission="api.players.ban"
+     @show="resetModal"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue
+index 48152de1..2d3b6a4c 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue
+@@ -2,7 +2,7 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Schedule Player for Deletion"
+   :action="updateDeletionSchedule"
+   :trigger-button-label="!isCurrentlyScheduledForDeletion ? 'Delete Player' : 'Cancel Deletion'"
+@@ -67,14 +67,14 @@ const scheduledDateTime = ref<DateTime | undefined>(DateTime.now().plus({ days:
+  * When true the target player is currently scheduled for deletion.
+  */
+ const isCurrentlyScheduledForDeletion = computed(() => {
+-  return playerData.value.model.deletionStatus !== 'None'
++  return playerData.value?.model.deletionStatus !== 'None'
+ })
+ 
+ /**
+  * Checks whether the player is currently banned.
+  */
+ const isCurrentlyBanned = computed(() => {
+-  return playerData.value.model.isBanned
++  return playerData.value?.model.isBanned
+ })
+ 
+ /**
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue
+index 8661c6e6..c35fdc1b 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue
+@@ -2,13 +2,13 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Edit Player Name"
+   :action="updateName"
+   trigger-button-label="Edit Name"
+   variant="warning"
+   :ok-button-disabled-tooltip="getDisabledReason(validationState)"
+-  permission="api.players.edit_name"
++  confirm-permission="api.players.edit_name"
+   @show="resetModal"
+   data-testid="action-edit-name"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue
+index b28481ab..29911844 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue
+@@ -1,8 +1,9 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData || allowDebugExport")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Export Player"
+     :action="downloadOk"
+     trigger-button-label="Export Player"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue
+index 1c59996a..7f377f71 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue
+@@ -7,7 +7,7 @@ MActionModalButton(
+   trigger-button-label="Force Reset Player"
+   variant="danger"
+   ok-button-label="Force Reset Player"
+-  permission="api.players.reset_player"
++  confirm-permission="api.players.reset_player"
+   data-testid="action-force-reset-player-state"
+   )
+   template(#default)
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue
+index 1b8f472e..d18e0f8d 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue
+@@ -1,8 +1,9 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="GDPR Data Export"
+     :action="downloadData"
+     trigger-button-label="GDPR Export"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue
+index f1398525..eb5c540d 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue
+@@ -3,7 +3,7 @@
+ <template lang="pug">
+ div(v-if="staticInfos.featureFlags.guilds && playerData")
+   MButton(
+-    permission="api.players.guild_tools"
++    :disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     @click="guildToolsModal?.open"
+     ) Guild Tools
+ 
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue
+index 4a67c5d8..86e04f76 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue
+@@ -2,13 +2,14 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Join an Experiment"
+   :action="joinOrUpdateExperiment"
+   trigger-button-label="Join Experiment"
+   variant="warning"
+   ok-button-label="Save"
+   :ok-button-disabled-tooltip="okButtonDisabledTooltip"
+-  permission="api.players.edit_experiment_groups"
++  confirm-permission="api.players.edit_experiment_groups"
+   @show="resetModal"
+   data-testid="action-join-experiment"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue
+index c479224f..32ae66ad 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue
+@@ -3,7 +3,7 @@
+ <template lang="pug">
+ //- Button to display the modal
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Overwrite Player"
+   :action="() => overwritePlayer(entityArchiveFile ?? entityArchiveText)"
+   trigger-button-label="Overwrite Player"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue
+index 6a056e0b..0a74f547 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue
+@@ -1,7 +1,7 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
+     modal-title="Move Devices from Another Account"
+     :action="moveAuth"
+@@ -9,7 +9,8 @@ div(v-if="playerData")
+     variant="warning"
+     ok-button-label="Reconnect Devices"
+     :ok-button-disabled-tooltip="!isFormValid ? 'Select a valid player account to proceed.' : undefined"
+-    permission="api.players.reconnect_account"
++    confirm-permission="api.players.reconnect_account"
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     @show="resetModal"
+     data-testid="action-merge-accounts"
+     )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue
+index 6fa1f7f9..fea8aae8 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue
+@@ -1,8 +1,9 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Reset Player State"
+     :action="resetPlayerState"
+     trigger-button-label="Reset Player"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue
+index 3ab6bf52..23219974 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue
+@@ -1,14 +1,15 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Send In-Game Mail"
+     :action="sendMail"
+     trigger-button-label="Send Mail"
+     ok-button-label="Send Mail"
+     :ok-button-disabled-tooltip="okButtonDisabledReason"
+-    permission="api.players.mail"
++    confirm-permission="api.players.mail"
+     @show="resetModal"
+     data-testid="action-mail"
+     )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue
+index d7238de0..44bc0773 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue
+@@ -1,15 +1,16 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Manage Developer Status"
+     :action="updateDeveloperStatus"
+     :trigger-button-label="playerData.model.isDeveloper ? 'Remove Dev Status' : 'Mark as Developer'"
+     variant="warning"
+     ok-button-label="Save Settings"
+     :ok-button-disabled-tooltip="!isStatusChanged ? `Toggle the switch to ${playerData.model.isDeveloper ? 'remove' : 'assign'} this player as a developer.` : undefined"
+-    permission="api.players.set_developer"
++    confirm-permission="api.players.set_developer"
+     @show="resetModal"
+     data-testid="action-set-developer"
+     )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue
+index f13da660..42067c74 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue
+@@ -2,9 +2,9 @@
+ 
+ <template lang="pug">
+ MTextButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   :variant="experiments.isPlayerTester ? 'warning' : undefined"
+-  permission="api.players.edit_experiment_groups"
++  confirm-permission="api.players.edit_experiment_groups"
+   @click="setTesterModal?.open()"
+   :data-testid="`set-action-tester-${experimentId}`"
+   ) {{ experiments.isPlayerTester ? 'Remove as tester' : 'Mark as tester' }}
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue
+index 4a986004..b843a04e 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue
+@@ -1,16 +1,17 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Control Session Debug Mode"
+     :action="toggleSessionDebugMode"
+-    :trigger-button-label="playerData.model.sessionDebugModeOverride ? 'Control Debug Mode' : 'Enable Debug Mode'"
++    :trigger-button-label="playerData?.model?.sessionDebugModeOverride ? 'Control Debug Mode' : 'Enable Debug Mode'"
+     trigger-button-full-width
+     variant="warning"
+     ok-button-label="Save Settings"
+     :ok-button-disabled-tooltip="saveSettingsButtonDisabledText"
+-    permission="api.players.toggle_debug_mode"
++    confirm-permission="api.players.toggle_debug_mode"
+     @show="resetModal"
+     data-testid="action-toggle-debug-mode"
+     )
+diff --git a/MetaplaySDK/Frontend/Core/src/initialization.ts b/MetaplaySDK/Frontend/Core/src/initialization.ts
+index 1df0d799..80b534be 100644
+--- a/MetaplaySDK/Frontend/Core/src/initialization.ts
++++ b/MetaplaySDK/Frontend/Core/src/initialization.ts
+@@ -1333,6 +1333,8 @@ const allInitializationSteps: InitializationStep[] = [
+         uiStore.toggleDeveloperUi(false)
+       } // Hide developer UI by default in production
+       else uiStore.toggleDeveloperUi(true) // Show developer UI by default in development
++      // METAPLAY_CHANGED
++      uiStore.toggleDeveloperUi(true)
+ 
+       // Restore "safety lock" state from local storage.
+       if (localStorage.isSafetyLockOn === 'true') {
+diff --git a/MetaplaySDK/Frontend/Core/src/router.ts b/MetaplaySDK/Frontend/Core/src/router.ts
+index 5c858e27..751f3e6b 100644
+--- a/MetaplaySDK/Frontend/Core/src/router.ts
++++ b/MetaplaySDK/Frontend/Core/src/router.ts
+@@ -391,36 +391,71 @@ router.beforeEach((to, from, next) => {
+ // Scroll to named `data-testid`'s component if provided in query string.
+ // Note: This can theoretically race with the above scrollBehavior, but it's fine since the use-cases are different.
+ // eg: '/players/Player:0000000000?scroll-to-data-testid=player-details-tab-0`
+-router.beforeEach((to, from, next) => {
++router.afterEach((to, from, failure) => {
+   /**
+    * We lazy load components, so we need to retry scrolling. This function will keep trying to scroll to the element until it is found or the retry count is exhausted.
+    * @param dataTestId ID of the element to scroll to.
+    * @param retryCount How many times to retry scrolling.
+    */
+-  function scrollDataTestidIntoView(dataTestId: string, retryCount: number): void {
++  function scrollDataTestidIntoView(dataTestId: string, retryCount: number) : void {
+     if (retryCount > 0) {
+       const el = document.querySelector(`[data-testid="${dataTestId}"]`)
+-      if (el) {
+-        el.scrollIntoView({
++      const contentContainer = document.querySelector('[data-testid="page-content-container"]')
++      if (el && contentContainer) {
++        const htmlEl = el as HTMLElement
++        // Add header offset
++        contentContainer.scrollTo({
++          top: getRelativeOffset(contentContainer, htmlEl) - 50,
+           behavior: 'smooth',
+         })
+       } else {
+-        // Try again in 100ms.
++        // Try again in 250ms.
+         setTimeout(() => {
+           scrollDataTestidIntoView(dataTestId, retryCount - 1)
+-        }, 100)
++        }, 250)
++      }
++    }
++  }
++
++  function clickDataTestid(dataTestId: string, retryCount: number) : void {
++    if (retryCount > 0) {
++      const el = document.querySelector(`[data-testid="${dataTestId}"]`)
++      const contentContainer = document.querySelector('[data-testid="page-content-container"]')
++      if (el && contentContainer) {
++        const htmlEl = el as HTMLElement
++        htmlEl?.click()
++      } else {
++        // Try again in 250ms.
++        setTimeout(() => {
++          clickDataTestid(dataTestId, retryCount - 1)
++        }, 500)
+       }
+     }
+   }
+ 
++  function getRelativeOffset(parentWindow: Element, elem: HTMLElement): number {
++    let offset = 0
++
++    let childWindow = elem
++    while (childWindow !== parentWindow) {
++      offset += childWindow.offsetTop
++      childWindow = childWindow.offsetParent as HTMLElement
++    }
++
++    return offset
++  }
++
+   // Get the data-testid from the query string.
+   const dataTestId = extractSingleValueFromQueryStringOrUndefined(to.query, 'scroll-to-data-testid')
++  const clickDataTestId = extractSingleValueFromQueryStringOrUndefined(to.query, 'click-data-testid')
+ 
+   // String found, attempt to scroll to it.
+   if (dataTestId) {
+     scrollDataTestidIntoView(dataTestId, 50) // 50 retries, 5 seconds
+   }
+-  next()
++  if (clickDataTestId) {
++    clickDataTestid(clickDataTestId, 50)
++  }
+ })
+ 
+ /**
+diff --git a/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue b/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue
+index 4e8af6e6..f516d155 100644
+--- a/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue
++++ b/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue
+@@ -43,6 +43,15 @@ MViewContainer(permission="api.audit_logs.search")
+             show-clear-button
+             @blur:model-value="searchAuditLogEventsSourceId = $event"
+             )
++          //- METAPLAY_CHANGED: Hide IP address
++          //- MInputText.mb-2(
++          //-   label="User IP Address"
++          //-   :model-value="searchAuditLogEventsSourceIpAddress"
++          //-   @update:model-value="searchAuditLogEventsSourceIpAddress = $event"
++          //-   :variant="searchAuditLogEventUserIpAddressUiState !== null ? searchAuditLogEventUserIpAddressUiState ? 'success' : 'danger' : 'default'"
++          //-   placeholder="192.168.0.1"
++          //-   :debounce="500"
++          //-   )
+           MInputText(
+             label="IP Address"
+             :model-value="searchAuditLogEventsSourceIpAddress"
+diff --git a/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue b/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue
+index 3b99428e..997269b8 100644
+--- a/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue
++++ b/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue
+@@ -52,7 +52,7 @@ MViewContainer(
+           :trigger-button-disabled-tooltip="!staticConfigData?.localizationsBuildInfo.buildSupported ? 'Localization builds have not been enabled for this environment.' : undefined"
+           ok-button-label="Build Localizations"
+           :ok-button-disabled-tooltip="!formValidationState ? 'Please fill in all required fields to proceed.' : undefined"
+-          permission="api.localization.edit"
++          confirm-permission="api.localization.edit"
+           @show="resetBuildNewConfigModal"
+           data-testid="build-localization-form"
+           )
+diff --git a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue
+index 026a9a98..60582398 100644
+--- a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue
++++ b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue
+@@ -118,6 +118,7 @@ Teleport(to="body")
+                 :variant="variant"
+                 :disabled-tooltip="okButtonDisabledTooltip"
+                 :safetyLock="!disableSafetyLock"
++                :permission="confirmPermission"
+                 @click="ok"
+                 :data-testid="dataTestid ? dataTestid + '-ok-button' : undefined"
+                 )
+@@ -197,6 +198,11 @@ const props = withDefaults(
+      * @deprecated This prop was removed in Release 31. Use `okButtonDisabledTooltip` instead.
+      */
+     okButtonDisabled?: never
++    /**
++     * Optional: Set a permission requirement for being able to use this action.
++     * @example 'api.broadcasts.edit'
++     */
++    confirmPermission?: string
+   }>(),
+   {
+     variant: 'primary',
+@@ -206,6 +212,7 @@ const props = withDefaults(
+     disableSafetyLock: false,
+     modalSize: 'default',
+     dataTestid: undefined,
++    confirmPermission: ''
+   }
+ )
+ 
+diff --git a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue
+index a6cfb564..6effa251 100644
+--- a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue
++++ b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue
+@@ -152,6 +152,11 @@ export interface Props {
+    * @deprecated This prop was removed in Release 30. Use `triggerButtonDisabledTooltip` instead.
+    */
+   triggerButtonDisabled?: never
++  /**
++   * Optional: Set a permission requirement for being able to use this action.
++   * @example 'api.broadcasts.edit'
++   */
++  confirmPermission?: string
+   /**
+    * Optional: Disable the 'Ok' button. Good for form validation.
+    * Set this prop to `true` to disable the ok-button or use a `string` to disable it and display a tooltip.
+@@ -173,6 +178,7 @@ const props = withDefaults(defineProps<Props>(), {
+   permission: undefined,
+   dataTestid: undefined,
+   triggerButtonDisabled: undefined,
++  confirmPermission: ''
+ })
+ 
+ const modalRef = ref<typeof MActionModal>()
+diff --git a/MetaplaySDK/Scripts/integration-tests.py b/MetaplaySDK/Scripts/integration-tests.py
+index d26fabda..35d41587 100644
+--- a/MetaplaySDK/Scripts/integration-tests.py
++++ b/MetaplaySDK/Scripts/integration-tests.py
+@@ -139,6 +139,7 @@ PLAYWRIGHT_NET_CONTAINER_NAME = f'{args.name_prefix}-playwright'
+ 
+ METAPLAY_SDK_DIR = os.path.relpath(os.path.join(os.path.dirname(__file__), '..'), '.').replace('\\','/')
+ PROJECT_BACKEND_DIR = os.path.join(args.project_dir, args.backend_dir).replace('\\', '/')
++PROJECT_SHARED_CODE_DIR = os.path.join(args.project_dir, args.shared_code_dir).replace('\\', '/')
+ 
+ args.backend_dir = args.backend_dir.replace('\\', '/')
+ args.project_dir = args.project_dir.replace('\\', '/')
+@@ -152,6 +153,9 @@ if not os.path.exists(os.path.join(args.project_dir, args.backend_dir)):
+ if not os.path.exists(os.path.join(PROJECT_BACKEND_DIR, 'Server')):
+   parser.error(f'The project backend directory "{args.project_dir}/{args.backend_dir}" doesn\'t contain a "Server" subdirectory, make sure your --project-dir and --backend-dir are correct!')
+ 
++if not os.path.exists(PROJECT_SHARED_CODE_DIR):
++      parser.error(f'Unable to find shared code in "{args.project_dir}/{args.shared_code_dir}", make sure your --shared-code-dir is correct!')
++
+ METAPLAY_OPTS = ' '.join([
+   '--Environment:EnableKeyboardInput=false',
+   '--Environment:ExitOnLogError=true',
+@@ -527,7 +531,7 @@ async def testBuildImage(log: logging.Logger):
+ async def testBots(log: logging.Logger):
+   gameserver = await startGameServer(log.getChild('server'))
+   try:
+-    await runBotClient(log.getChild('bots'), duration='00:02:00', max_bots=100, spawn_rate=30, session_duration='00:00:30')
++    await runBotClient(log.getChild('bots'), duration='00:02:00', max_bots=2, spawn_rate=1, session_duration='00:00:30')
+     gameserver.summarizeMetrics()
+   finally:
+     await gameserver.stop()
+-- 
+2.52.0
+
