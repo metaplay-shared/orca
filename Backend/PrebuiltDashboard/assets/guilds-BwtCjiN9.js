@@ -1,0 +1,1 @@
+import{bp as o,bq as i,br as e,bs as c}from"./index-DZx5c7XT.js";function n(){return{permission:"api.guilds.view",pollingPolicy:e(5e3),fetcherPolicy:i("/guilds/activeGuilds"),cacheRetentionPolicy:o()}}function s(t){return{permission:"api.guilds.view",pollingPolicy:e(5e3),fetcherPolicy:i(`/guilds/${t}`),cacheRetentionPolicy:c(1e4)}}export{s as a,n as g};

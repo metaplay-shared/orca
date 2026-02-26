@@ -1,0 +1,264 @@
+<linker>
+  <assembly fullname="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="Code.UI.Builders.BuilderItem" preserve="all" />
+    <type fullname="Code.UI.Builders.BuilderPopup" preserve="all" />
+    <type fullname="Code.UI.Builders.BuildTimeRemainingLabel" preserve="all" />
+    <type fullname="Code.UI.Building.BuildingDetailsPopup" preserve="all" />
+    <type fullname="Code.UI.Building.BuildingInstructionsPopup" preserve="all" />
+    <type fullname="Code.UI.BuyEnergyPopup" preserve="all" />
+    <type fullname="Code.UI.Cheats.CheatItemSpawnButton" preserve="all" />
+    <type fullname="Code.UI.Cheats.CheatsUIRoot" preserve="all" />
+    <type fullname="Code.UI.ConfirmationPopup" preserve="all" />
+    <type fullname="Code.UI.ConnectionErrorPopup" preserve="all" />
+    <type fullname="Code.UI.Core.UIRootSafeAreaScaler" preserve="all" />
+    <type fullname="Code.UI.CurrencyLabel" preserve="all" />
+    <type fullname="Code.UI.Deletion.DeletionScheduledUIRoot" preserve="all" />
+    <type fullname="Code.UI.Dialogue.DialoguePopup" preserve="all" />
+    <type fullname="Code.UI.Dialogue.TextFader" preserve="all" />
+    <type fullname="Code.UI.Events.ActivityEventButton" preserve="all" />
+    <type fullname="Code.UI.Events.ActivityEventDetailsPopup" preserve="all" />
+    <type fullname="Code.UI.Events.AdvertisementContents.ActivityEventAdvertisementContent" preserve="all" />
+    <type fullname="Code.UI.Events.AdvertisementContents.DiscountEventAdvertisementContent" preserve="all" />
+    <type fullname="Code.UI.Events.DailyTaskDetails" preserve="all" />
+    <type fullname="Code.UI.Events.DailyTasksButton" preserve="all" />
+    <type fullname="Code.UI.Events.DailyTasksReward" preserve="all" />
+    <type fullname="Code.UI.Events.DailyTasksRewards" preserve="all" />
+    <type fullname="Code.UI.Events.DailyTasksTaskList" preserve="all" />
+    <type fullname="Code.UI.Events.DailyTasksUIRoot" preserve="all" />
+    <type fullname="Code.UI.Events.DiscountEvent.DiscountEventUIRoot" preserve="all" />
+    <type fullname="Code.UI.Events.EventAdvertisementPopup" preserve="all" />
+    <type fullname="Code.UI.Events.EventButton" preserve="all" />
+    <type fullname="Code.UI.Events.EventButtonsPresenter" preserve="all" />
+    <type fullname="Code.UI.Events.EventCards.ActivityEventCard" preserve="all" />
+    <type fullname="Code.UI.Events.EventCards.Components.EventCardStatus" preserve="all" />
+    <type fullname="Code.UI.Events.EventCards.Components.EventCardTimer" preserve="all" />
+    <type fullname="Code.UI.Events.EventCards.DailyTasksEventCard" preserve="all" />
+    <type fullname="Code.UI.Events.EventCards.DiscountEventCard" preserve="all" />
+    <type fullname="Code.UI.Events.EventsPopup" preserve="all" />
+    <type fullname="Code.UI.Events.EventTimer" preserve="all" />
+    <type fullname="Code.UI.Events.FloatingClaimedReward" preserve="all" />
+    <type fullname="Code.UI.Events.RewardRoad" preserve="all" />
+    <type fullname="Code.UI.Events.RewardRoadItem" preserve="all" />
+    <type fullname="Code.UI.Events.RewardRoadLevel" preserve="all" />
+    <type fullname="Code.UI.Events.SeasonalEvent.SeasonalEventUIRoot" preserve="all" />
+    <type fullname="Code.UI.ForcedUpdatePopup" preserve="all" />
+    <type fullname="Code.UI.Hud.PlayerLevelIndicator" preserve="all" />
+    <type fullname="Code.UI.Hud.PlayerXpIndicator" preserve="all" />
+    <type fullname="Code.UI.Hud.VipPassIndicator" preserve="all" />
+    <type fullname="Code.UI.Hud.VipPassTimeLeftLabel" preserve="all" />
+    <type fullname="Code.UI.Inbox.InboxItem" preserve="all" />
+    <type fullname="Code.UI.Inbox.InboxPopup" preserve="all" />
+    <type fullname="Code.UI.Inbox.InboxRewardItem" preserve="all" />
+    <type fullname="Code.UI.Inventory.InventoryEntry" preserve="all" />
+    <type fullname="Code.UI.Inventory.InventoryPopup" preserve="all" />
+    <type fullname="Code.UI.Inventory.OpenInventoryButton" preserve="all" />
+    <type fullname="Code.UI.Inventory.OpenLogbookButton" preserve="all" />
+    <type fullname="Code.UI.Island.MapButton" preserve="all" />
+    <type fullname="Code.UI.Island.UnlockIslandPopup" preserve="all" />
+    <type fullname="Code.UI.ItemDiscovery.DiscoveryContentPresenter" preserve="all" />
+    <type fullname="Code.UI.ItemDiscovery.ItemDiscoveryCategoryContent" preserve="all" />
+    <type fullname="Code.UI.ItemDiscovery.ItemDiscoveryChain" preserve="all" />
+    <type fullname="Code.UI.ItemDiscovery.ItemDiscoveryItem" preserve="all" />
+    <type fullname="Code.UI.ItemDiscovery.ItemDiscoveryTabButton" preserve="all" />
+    <type fullname="Code.UI.ItemInfo.ItemInfo" preserve="all" />
+    <type fullname="Code.UI.ItemRemoval.ItemRemovalButton" preserve="all" />
+    <type fullname="Code.UI.Logbook.LogbookUIRoot" preserve="all" />
+    <type fullname="Code.UI.Logbook.Tasks.ChapterProgressionWaypointPresenter" preserve="all" />
+    <type fullname="Code.UI.Logbook.Tasks.LogbookChapterContentPresenter" preserve="all" />
+    <type fullname="Code.UI.Logbook.Tasks.LogbookChapterSelectorPresenter" preserve="all" />
+    <type fullname="Code.UI.Logbook.Tasks.LogbookTaskCardPresenter" preserve="all" />
+    <type fullname="Code.UI.Logbook.Tasks.LogbookTaskProgressionPresenter" preserve="all" />
+    <type fullname="Code.UI.Logbook.Tasks.LogbookTasksContentPresenter" preserve="all" />
+    <type fullname="Code.UI.Logbook.Tasks.LogbookTasksPresenter" preserve="all" />
+    <type fullname="Code.UI.MaintenanceModePopup" preserve="all" />
+    <type fullname="Code.UI.Map.Island" preserve="all" />
+    <type fullname="Code.UI.Market.MarketCategory" preserve="all" />
+    <type fullname="Code.UI.Market.MarketContentPresenter" preserve="all" />
+    <type fullname="Code.UI.Market.MarketItem" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeBoard.Dock.DockPresenter" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeBoard.LockArea.LockArea" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeBoard.LockArea.LockAreaDetails" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeBoard.LockArea.LockAreaPresenter" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeBoard.LockArea.LockAreaState" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeBoard.Ship.ShipPresenter" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.BubbleAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.BuilderAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.BuildingActionsAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.BuildingLevelAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.BuildingPieceAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.BuildingSiteAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.CollectableAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.ConsumableBuilderAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.CreatorAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.CreatorTimerAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.HeroItemAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.ItemSelectorAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.MergeHoverEffectAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.MineAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.MineLevelAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.PointerAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.ProgressIndicator" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.ProgressIndicatorAddOn" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.TimerBubble" preserve="all" />
+    <type fullname="Code.UI.Merge.AddOns.MergeItem.TimerIcon" preserve="all" />
+    <type fullname="Code.UI.Merge.Hero.HeroPopup" preserve="all" />
+    <type fullname="Code.UI.Merge.Hero.HeroTask" preserve="all" />
+    <type fullname="Code.UI.Merge.Hero.HeroTaskReward" preserve="all" />
+    <type fullname="Code.UI.Merge.Hero.HeroTaskTimer" preserve="all" />
+    <type fullname="Code.UI.Merge.InventoryFlightTarget" preserve="all" />
+    <type fullname="Code.UI.Merge.ItemActions.ItemActions" preserve="all" />
+    <type fullname="Code.UI.Merge.MapFlightTarget" preserve="all" />
+    <type fullname="Code.UI.Merge.MergeBoardBordersPresenter" preserve="all" />
+    <type fullname="Code.UI.Merge.ShipFlightTarget" preserve="all" />
+    <type fullname="Code.UI.MergeBase.MergeBoardRoot" preserve="all" />
+    <type fullname="Code.UI.MergeBase.MergeItem" preserve="all" />
+    <type fullname="Code.UI.MergeBase.MergeTile" preserve="all" />
+    <type fullname="Code.UI.OfferPopup" preserve="all" />
+    <type fullname="Code.UI.Offers.OfferItem" preserve="all" />
+    <type fullname="Code.UI.Player.PlayerLevelUIRoot" preserve="all" />
+    <type fullname="Code.UI.Privacy.PrivacyPopup" preserve="all" />
+    <type fullname="Code.UI.RequirementsDisplay.RequirementResourceUiItem" preserve="all" />
+    <type fullname="Code.UI.RequirementsDisplay.ResourceRequirements" preserve="all" />
+    <type fullname="Code.UI.Rewarding.RewardItem" preserve="all" />
+    <type fullname="Code.UI.Rewarding.RewardPopup" preserve="all" />
+    <type fullname="Code.UI.SendToIsland.SendToIslandItem" preserve="all" />
+    <type fullname="Code.UI.SendToIsland.SendToIslandPopup" preserve="all" />
+    <type fullname="Code.UI.Settings.OpenPrivacyPolicyButton" preserve="all" />
+    <type fullname="Code.UI.Settings.OpenTermsOfServiceButton" preserve="all" />
+    <type fullname="Code.UI.Settings.Toggle" preserve="all" />
+    <type fullname="Code.UI.Shop.ClaimedProductPopup" preserve="all" />
+    <type fullname="Code.UI.Shop.OpenShopButton" preserve="all" />
+    <type fullname="Code.UI.Shop.ShopContentPresenter" preserve="all" />
+    <type fullname="Code.UI.Shop.ShopItem" preserve="all" />
+    <type fullname="Code.UI.Shop.ShopUIRoot" preserve="all" />
+    <type fullname="Code.UI.Tasks.ClaimRewardButton" preserve="all" />
+    <type fullname="Code.UI.Tasks.CompleteTaskButton" preserve="all" />
+    <type fullname="Code.UI.Tasks.Hero.HeroTaskGiver" preserve="all" />
+    <type fullname="Code.UI.Tasks.Islanders.IslanderTaskContainer" preserve="all" />
+    <type fullname="Code.UI.Tasks.Islanders.IslanderTaskGiver" preserve="all" />
+    <type fullname="Code.UI.Tasks.Islanders.TaskGiverProgressionItem" preserve="all" />
+    <type fullname="Code.UI.Tasks.SkipTimerButton" preserve="all" />
+    <type fullname="Code.UI.Tutorial.FeatureElement" preserve="all" />
+    <type fullname="Code.UI.Tutorial.HighlightableElement" preserve="all" />
+    <type fullname="Code.UI.UITween.RotateEndlessUITween" preserve="all" />
+    <type fullname="Code.UI.Utils.EmptyGraphic" preserve="all" />
+    <type fullname="Code.UI.Utils.HighFrameratePlayableDirector" preserve="all" />
+    <type fullname="Code.UI.Utils.HighFramerateScrollRect" preserve="all" />
+    <type fullname="Code.UI.Utils.LocalizedLabel" preserve="all" />
+    <type fullname="Code.UI.Utils.RotatingGlow" preserve="all" />
+    <type fullname="Code.UI.VipPass.VipPassPerk" preserve="all" />
+    <type fullname="Code.UI.VipPass.VipPassPopup" preserve="all" />
+  </assembly>
+  <assembly fullname="Coffee.UIParticle, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="Coffee.UIExtensions.UIParticle" preserve="all" />
+  </assembly>
+  <assembly fullname="Unity.Addressables, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" preserve="all">
+    <type fullname="UnityEngine.AddressableAssets.Addressables" preserve="all" />
+  </assembly>
+  <assembly fullname="Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" preserve="all">
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.AssetBundleProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.AtlasSpriteProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.BundledAssetProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.InstanceProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.SceneProvider" preserve="all" />
+  </assembly>
+  <assembly fullname="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="TMPro.TextMeshProUGUI" preserve="all" />
+    <type fullname="TMPro.TMP_ColorGradient" preserve="all" />
+    <type fullname="TMPro.TMP_FontAsset" preserve="all" />
+    <type fullname="TMPro.FaceInfo_Legacy" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.FontAssetCreationSettings" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.KerningTable" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_Character" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_FontFeatureTable" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_FontWeightPair" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.VertexGradient" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="Unity.Timeline, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.Timeline.AnimationTrack" preserve="all" />
+    <type fullname="UnityEngine.Timeline.TimelineAsset" preserve="all" />
+    <type fullname="UnityEngine.Timeline.MarkerList" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Timeline.TimelineAsset/EditorSettings" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.AnimationClip" preserve="all" />
+    <type fullname="UnityEngine.Animator" preserve="all" />
+    <type fullname="UnityEngine.RuntimeAnimatorController" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.GameObject" preserve="all" />
+    <type fullname="UnityEngine.Material" preserve="all" />
+    <type fullname="UnityEngine.Object" preserve="all" />
+    <type fullname="UnityEngine.RectTransform" preserve="all" />
+    <type fullname="UnityEngine.Shader" preserve="all" />
+    <type fullname="UnityEngine.Sprite" preserve="all" />
+    <type fullname="UnityEngine.SpriteRenderer" preserve="all" />
+    <type fullname="UnityEngine.Texture2D" preserve="all" />
+    <type fullname="UnityEngine.Transform" preserve="all" />
+    <type fullname="UnityEngine.U2D.SpriteAtlas" preserve="all" />
+    <type fullname="UnityEngine.Events.PersistentCallGroup" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.RectOffset" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.ArgumentCache" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.PersistentListenerMode" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="UnityEngine.DirectorModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.Playables.PlayableDirector" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.ParticleSystem" preserve="all" />
+    <type fullname="UnityEngine.ParticleSystemForceField" preserve="all" />
+    <type fullname="UnityEngine.ParticleSystemRenderer" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.Physics2DModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.CircleCollider2D" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.BoxCollider" preserve="all" />
+    <type fullname="UnityEngine.Rigidbody" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.TextRenderingModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.Font" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.UI.AspectRatioFitter" preserve="all" />
+    <type fullname="UnityEngine.UI.Button" preserve="all" />
+    <type fullname="UnityEngine.UI.CanvasScaler" preserve="all" />
+    <type fullname="UnityEngine.UI.ContentSizeFitter" preserve="all" />
+    <type fullname="UnityEngine.UI.GraphicRaycaster" preserve="all" />
+    <type fullname="UnityEngine.UI.GridLayoutGroup" preserve="all" />
+    <type fullname="UnityEngine.UI.HorizontalLayoutGroup" preserve="all" />
+    <type fullname="UnityEngine.UI.Image" preserve="all" />
+    <type fullname="UnityEngine.UI.LayoutElement" preserve="all" />
+    <type fullname="UnityEngine.UI.Mask" preserve="all" />
+    <type fullname="UnityEngine.UI.Scrollbar" preserve="all" />
+    <type fullname="UnityEngine.UI.ScrollRect" preserve="all" />
+    <type fullname="UnityEngine.UI.Slider" preserve="all" />
+    <type fullname="UnityEngine.UI.Toggle" preserve="all" />
+    <type fullname="UnityEngine.UI.ToggleGroup" preserve="all" />
+    <type fullname="UnityEngine.UI.VerticalLayoutGroup" preserve="all" />
+    <type fullname="UnityEngine.UI.AnimationTriggers" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Button/ButtonClickedEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.ColorBlock" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.MaskableGraphic/CullStateChangedEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Navigation" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.SpriteState" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.ScrollRect/ScrollRectEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Scrollbar/ScrollEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Slider/SliderEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Toggle/ToggleEvent" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="UnityEngine.UIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.Canvas" preserve="all" />
+    <type fullname="UnityEngine.CanvasGroup" preserve="all" />
+    <type fullname="UnityEngine.CanvasRenderer" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.TextCoreFontEngineModule">
+    <type fullname="UnityEngine.TextCore.FaceInfo" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.Glyph" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.GlyphMetrics" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.GlyphRect" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.LowLevel.GlyphAdjustmentRecord" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.LowLevel.GlyphPairAdjustmentRecord" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.LowLevel.GlyphValueRecord" preserve="nothing" serialized="true" />
+  </assembly>
+</linker>

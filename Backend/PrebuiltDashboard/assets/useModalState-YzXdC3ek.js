@@ -1,0 +1,1 @@
+import{b as t,k as a}from"./index-DZx5c7XT.js";const o=a(new Set);function s(e){o.value.add(e)}function d(e){o.value.delete(e)}function r(){const e=t(()=>o.value.size>0),n=t(()=>o.value.size);return{hasOpenModals:e,openModalCount:n,getOpenModalIds:()=>new Set(o.value),registerModal:s,unregisterModal:d}}export{r as u};
