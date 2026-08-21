@@ -1,0 +1,1 @@
+import{c9 as u}from"./index-B6Jl3f-_.js";function l(e){return function(r,i,o){for(var s=-1,n=Object(r),a=o(r),f=a.length;f--;){var t=a[++s];if(i(n[t],t,n)===!1)break}return r}}var h=l();function b(e,r){return e&&h(e,r,u)}export{b};

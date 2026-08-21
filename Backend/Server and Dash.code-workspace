@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"path": "./Dashboard",
+			"name": "Dashboard"
+		},
+		{
+			"path": "./Server",
+			"name": "Game Server"
+		},
+		{
+			"path": "../MetaplaySDK/Backend/Server",
+			"name": "SDK Game Server"
+		},
+		{
+			"path": "../MetaplaySDK/Frontend"
+		},
+		{
+			"path": "../GameWebsite"
+		},
+		{
+			"path": "../.github"
+		}
+	],
+}

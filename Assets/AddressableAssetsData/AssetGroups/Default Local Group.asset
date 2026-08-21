@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: 
+  m_GroupName: Default Local Group
+  m_GUID: 47aafce04b7784705afd731941e155b9
+  m_SerializeEntries:
+  - m_GUID: 10d72c10f930e4d1688cbb4836951a8a
+    m_Address: Task/HeroTaskGiver
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1195245b89823354290b55b8b820ae07
+    m_Address: Misc
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a620671cd8e549e2925778bc8c608eb
+    m_Address: Offers
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3033a1c23e9d24543932a3aac40b0159
+    m_Address: Task/IslanderTaskGiver
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3fa96bb5d2eb64d1c8ebc8015ff6caf4
+    m_Address: Heroes
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Heroes
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41b23bc70f16e4c029f4b470f3f0e813
+    m_Address: Merge/Item
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e800f906f9124b3a98445c355b9a9ce
+    m_Address: Island
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8afdc4355ec0b4bd393bcbd35ea58833
+    m_Address: MergeBorder
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - MergeBorder
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8e0e17fd2c92922458cad922598b49e3
+    m_Address: UI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9ce5ee6bc507f475d98866075f1e1b7a
+    m_Address: Icons
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Currencies
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: abac69d2251354b2a8ec991433ce6885
+    m_Address: ItemCategoriesIcons
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: acbdd6f9e2a114d3db5e240513c05d07
+    m_Address: Lockarea
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Lockarea
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b16492d9f3cef4c92b82544b207723e6
+    m_Address: RequirementsDisplay/RequirementResourceUiItem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4e44079937744c66897afc3f53ff2b0
+    m_Address: Merge/View
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e96869048d54a416dbcbc7c2d2703aa3
+    m_Address: Popup
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - LazyPersistent
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ef361c26fe9d10942a110afbb43a79c5
+    m_Address: Islands
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 850e678c9fd794b7199ad2a93bbb975a, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 9dd0d02dd35a8434c85bf48282f7d0f2, type: 2}
+    - {fileID: 11400000, guid: db94e0b459f9b4b859909c1c7413fba5, type: 2}

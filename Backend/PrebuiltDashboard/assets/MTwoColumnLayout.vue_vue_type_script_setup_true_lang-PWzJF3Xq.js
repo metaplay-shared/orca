@@ -1,0 +1,1 @@
+import{d as a,o as s,c as o,a4 as r,M as l}from"./index-B6Jl3f-_.js";const m=a({__name:"MTwoColumnLayout",props:{stretchItemsVertically:{type:Boolean}},setup(t){return(e,n)=>(s(),o("div",{class:l(["m-two-column-parent tw-flex tw-flex-wrap tw-justify-center tw-gap-4 @2xl:tw-gap-x-3",[{"tw-items-start":!t.stretchItemsVertically}]])},[r(e.$slots,"default")],2))}});export{m as _};
