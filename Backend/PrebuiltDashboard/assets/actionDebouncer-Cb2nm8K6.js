@@ -1,0 +1,1 @@
+function e(e,t,n,r){let i,a,o=0,s=!1,c=c=>{let u=++o;l(),s=!0,i=setTimeout(()=>{i=void 0,a=e.setup(c,e=>{u===o&&(a=void 0,s=!1,t(e))},e=>{u===o&&(a=void 0,s=!1,n(e))})},r)},l=()=>{i!==void 0&&(clearInterval(i),i=void 0),a!==void 0&&(e.cancel(a),a=void 0),s=!1};return{requestAction:c,cancel:l,isRequestOngoing:()=>s}}export{e as t};

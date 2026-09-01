@@ -1,0 +1,1 @@
+function e(e){return e===`Preview`?`primary`:e===`Active`?`success`:e===`EndingSoon`?`warning`:`neutral`}export{e as t};

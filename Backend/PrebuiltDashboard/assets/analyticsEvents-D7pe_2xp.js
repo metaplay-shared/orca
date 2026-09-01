@@ -1,0 +1,1 @@
+import{i as e,l as t,s as n}from"./src-4TcMtTH0.js";function r(r){return{permission:`api.analytics_events.view`,pollingPolicy:e(),fetcherPolicy:t(`/analyticsEvents/${r}/bigQueryExample`),cacheRetentionPolicy:n()}}function i(){return{permission:`api.analytics_events.view`,pollingPolicy:e(),fetcherPolicy:t(`/analyticsEvents`),cacheRetentionPolicy:n()}}export{r as n,i as t};

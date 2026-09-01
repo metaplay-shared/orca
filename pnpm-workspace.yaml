@@ -1,0 +1,8 @@
+packages:
+  - Backend/Dashboard
+  - MetaplaySDK/Frontend/*
+  - GameWebsite
+allowBuilds:
+  '@parcel/watcher': true
+  bootstrap-vue: true
+  esbuild: true

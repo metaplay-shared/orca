@@ -1,0 +1,1938 @@
+diff --git a/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs b/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs
+index e048c71..b44d83e 100644
+--- a/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs
++++ b/MetaplaySDK/Backend/BotClient/Actors/BotCoordinator.cs
+@@ -45,11 +45,12 @@ namespace Metaplay.BotClient
+         static readonly Prometheus.Gauge    c_maxBotId                  = Prometheus.Metrics.CreateGauge("botclient_config_max_bot_id", "BotClient maximum id to use for a spawned bot");
+         static readonly Prometheus.Gauge    c_spawnRate                 = Prometheus.Metrics.CreateGauge("botclient_config_spawn_rate", "BotClient number of new bots to spawn per second");
+ 
+-        EntityId                                _entityId           = EntityId.Create(EntityKindBotCore.BotCoordinator, 0);
+-        ICancelable                             _cancelUpdateTimer  = new Cancelable(Context.System.Scheduler);
+-        ICancelable                             _cancelPrintTimer   = new Cancelable(Context.System.Scheduler);
+-        RandomPCG                               _rnd                = RandomPCG.CreateNew();
+-        HashSet<EntityId>                       _botsInSession      = new HashSet<EntityId>();
++        EntityId          _entityId          = EntityId.Create(EntityKindBotCore.BotCoordinator, 0);
++        ICancelable       _cancelUpdateTimer = new Cancelable(Context.System.Scheduler);
++        ICancelable       _cancelPrintTimer  = new Cancelable(Context.System.Scheduler);
++        RandomPCG         _rnd               = RandomPCG.CreateNew();
++        int               _runningIndex      = 0;
++        HashSet<EntityId> _botsInSession     = new HashSet<EntityId>();
+ 
+         public BotCoordinator(EntityShardConfig shardConfig) : base(shardConfig)
+         {
+@@ -71,11 +72,26 @@ namespace Metaplay.BotClient
+             {
+                 // If not at requested amount, spawn more
+                 int numBots = _entityStates.Count;
+-                if (numBots < botOpts.MaxBots)
++                if (numBots < botOpts.MaxBotsBiasedByDay)
+                 {
+                     // Spawn a bot (with random id up to maxBotId)
+-                    long maxBotId = botOpts.MaxBotId > 0 ? botOpts.MaxBotId : 5 * botOpts.MaxBots;
+-                    long botIndex = _rnd.NextLong() % maxBotId;
++                    // METAPLAY_CHANGED: Spawn bots with a rotating id, with first 5 bots being special
++                    long maxBotId = botOpts.MaxBotId > 0 ? botOpts.MaxBotId : 5 * botOpts.MaxBotsBiasedByDay;
++
++                    // Get current day of year for daily rotation
++                    int dayOfYear = DateTime.UtcNow.DayOfYear;
++
++                    // Ensure the first 5 bots are always present
++                    long botIndex;
++                    if (numBots < 5) {
++                        // If we have fewer than 5 bots, prioritize creating the special bots first
++                        botIndex = numBots;
++                    } else {
++                        // Once we have at least 5 bots, we can create the rotating ones
++                        // For the remaining bots, use a daily rotation pattern
++                        botIndex = 5 + (((_runningIndex++) + (dayOfYear * 37)) % Math.Max(1, maxBotId - 5));
++                    }
++
+                     EntityId botId = ManualShardingStrategy.CreateEntityId(_selfShardId, (ulong)botIndex);
+                     _log.Verbose("Spawning bot {BotId} (index {BotIndex})", botId, botIndex);
+                     MetaSerialized<MetaMessage> initializeBot = new MetaSerialized<MetaMessage>(new InitializeBot(), MetaSerializationFlags.IncludeAll, logicVersion: null);
+@@ -95,11 +111,11 @@ namespace Metaplay.BotClient
+ 
+             BotOptions botOpts = RuntimeOptionsRegistry.Instance.GetCurrent<BotOptions>();
+             int numBots = _entityStates.Count;
+-            _log.Info("{NumBots} bots, {NumInSession} in session, {MaxBots} max", numBots, _botsInSession.Count, botOpts.MaxBots);
++            _log.Info("{NumBots} bots, {NumInSession} in session, {MaxBots} max", numBots, _botsInSession.Count, botOpts.MaxBotsBiasedByDay);
+ 
+             // Expose config metrics
+             c_expectedSessionDuration.Set(botOpts.ExpectedSessionDuration.TotalSeconds);
+-            c_maxBots.Set(botOpts.MaxBots);
++            c_maxBots.Set(botOpts.MaxBotsBiasedByDay);
+             c_maxBotId.Set(botOpts.MaxBotId);
+             c_spawnRate.Set(botOpts.SpawnRate);
+         }
+diff --git a/MetaplaySDK/Backend/BotClient/BotClientMain.cs b/MetaplaySDK/Backend/BotClient/BotClientMain.cs
+index 22b4d35..63032be 100644
+--- a/MetaplaySDK/Backend/BotClient/BotClientMain.cs
++++ b/MetaplaySDK/Backend/BotClient/BotClientMain.cs
+@@ -68,13 +68,13 @@ namespace Metaplay.BotClient
+             switch (key.Key)
+             {
+                 case ConsoleKey.OemPlus:
+-                    botOpts.MaxBots = 2 * botOpts.MaxBots;
+-                    Console.WriteLine("MaxBots = {0}", botOpts.MaxBots);
++                    botOpts.MaxBots = 2 * botOpts.MaxBotsBiasedByDay;
++                    Console.WriteLine("MaxBots = {0}", botOpts.MaxBotsBiasedByDay);
+                     break;
+ 
+                 case ConsoleKey.OemMinus:
+-                    botOpts.MaxBots = Math.Max(1, botOpts.MaxBots / 2);
+-                    Console.WriteLine("MaxBots = {0}", botOpts.MaxBots);
++                    botOpts.MaxBots = Math.Max(1, botOpts.MaxBotsBiasedByDay / 2);
++                    Console.WriteLine("MaxBots = {0}", botOpts.MaxBotsBiasedByDay);
+                     break;
+             }
+         }
+diff --git a/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs b/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs
+index 8a753ee..dfe2b3b 100644
+--- a/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs
++++ b/MetaplaySDK/Backend/BotClient/Entities/BotClientBase.cs
+@@ -156,7 +156,8 @@ namespace Metaplay.BotClient
+ 
+         LifecycleState                  _lifecycleState;
+         SessionNonceService             _sessionNonceService;
+-        BotClientDeviceGuidService      _sessionGuidService;
++        // METAPLAY_CHANGED: Make protected
++        protected BotClientDeviceGuidService      _sessionGuidService;
+         BotClientCredentialsService     _sessionCredentialsService;
+         ServerConnection                _serverConnection;
+         BotMessageDispatcher            _messageDispatcher;
+@@ -334,7 +335,8 @@ namespace Metaplay.BotClient
+             c_connectAttempts.Inc();
+         }
+ 
+-        BuildVersion GetBuildVersion() => new BuildVersion(version: "0.0.1-bot", buildNumber: CloudCoreVersion.BuildNumber ?? "undefined", commitId: CloudCoreVersion.CommitId ?? "undefined");
++        // METAPLAY_CHANGED: Make public
++        public BuildVersion GetBuildVersion() => new BuildVersion(version: "0.0.1-bot", buildNumber: CloudCoreVersion.BuildNumber ?? "undefined", commitId: CloudCoreVersion.CommitId ?? "undefined");
+ 
+         /// <summary> Bot equivalent of <c>IMetaplayConnectionDelegate.GetLoginPayload</c>. </summary>
+         protected virtual Handshake.ILoginRequestGamePayload    CreateLoginRequestGamePayload()         => null;
+diff --git a/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs b/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs
+index 9d34735..0d5889b 100644
+--- a/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs
++++ b/MetaplaySDK/Backend/BotClient/Entities/BotClientDeviceGuidService.cs
+@@ -5,7 +5,8 @@ using Metaplay.Core.Network;
+ 
+ namespace Metaplay.BotClient
+ {
+-    class BotClientDeviceGuidService : ISessionDeviceGuidService
++    // METAPLAY_CHANGED: Make public
++    public class BotClientDeviceGuidService : ISessionDeviceGuidService
+     {
+         string _deviceGuid = MetaGuid.None.ToString();
+ 
+diff --git a/MetaplaySDK/Backend/BotClient/Entities/BotOptions.cs b/MetaplaySDK/Backend/BotClient/Entities/BotOptions.cs
+index 23db33d..367bba0 100644
+--- a/MetaplaySDK/Backend/BotClient/Entities/BotOptions.cs
++++ b/MetaplaySDK/Backend/BotClient/Entities/BotOptions.cs
+@@ -42,6 +42,13 @@ namespace Metaplay.BotClient
+         [CommandLineAlias("-MaxBots")]
+         [MetaDescription("Maximum number of bots to spawn.")]
+         public int          MaxBots                             { get; set; } = 500;
++        public int          MaxBotsBiasedByDay {
++            get
++            {
++                RandomPCG randomPcg = RandomPCG.CreateFromSeed((ulong)DateTime.Today.DayOfYear);
++                return Math.Max((int)(MaxBots * (randomPcg.NextFloat() * .6f + .7f)), 1);
++            }
++        }
+         [CommandLineAlias("-MaxBotId")]
+         [MetaDescription("Maximum bot id to use (defaults to 5 * MaxBots if left as 0).")]
+         public long         MaxBotId                            { get; private set; } = 0; // Note: using long to allow scientific notation in json, which Helm uses for large values.
+diff --git a/MetaplaySDK/Backend/Cloud/Application/Application.cs b/MetaplaySDK/Backend/Cloud/Application/Application.cs
+index 4ad33ec..560a5e2 100644
+--- a/MetaplaySDK/Backend/Cloud/Application/Application.cs
++++ b/MetaplaySDK/Backend/Cloud/Application/Application.cs
+@@ -73,6 +73,9 @@ namespace Metaplay.Cloud.Application
+             IsStagingEnvironment ? "stage" :
+             IsDevelopmentEnvironment ? "dev" :
+             IsLocalEnvironment ? "local" :
++            // METAPLAY_CHANGED: Demo
++            IsDemoEnvironment ? "demo" :
++            IsSalesEnvironment ? "sales" :
+             null;
+         [MetaDescription("Enables the development features (such as cheats, in-app dev purchases, etc.) for all players.")]
+         public bool                     EnableDevelopmentFeatures   { get; private set; } = IsLocalEnvironment || IsDevelopmentEnvironment;
+diff --git a/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs b/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs
+index c2adec2..43aec17 100644
+--- a/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs
++++ b/MetaplaySDK/Backend/Cloud/RuntimeOptions/RuntimeOptions.cs
+@@ -18,6 +18,9 @@ namespace Metaplay.Cloud.RuntimeOptions
+ 
+         public static bool IsLocalEnvironment       => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Local;
+         public static bool IsDevelopmentEnvironment => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Development;
++        // METAPLAY_CHANGED: Demo
++        public static bool IsDemoEnvironment        => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Demo;
++        public static bool IsSalesEnvironment       => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Sales;
+         public static bool IsStagingEnvironment     => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Staging;
+         public static bool IsProductionEnvironment  => RuntimeEnvironmentInfo.Instance.EnvironmentFamily == EnvironmentFamily.Production;
+         public static bool IsCloudEnvironment       => !IsLocalEnvironment;
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs
+index a44f0c6..a630dc0 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/AuditLogController.cs
+@@ -35,12 +35,15 @@ namespace Metaplay.Server.AdminApi.Controllers
+         {
+             PersistedAuditLogEvent persistedEvent = await MetaDatabase.Get().GetAuditLogEventAsync(eventIdStr);
+             if (persistedEvent != null)
++            {
++                // METAPLAY_CHANGED: Source IP addresses are hidden
++                persistedEvent.SourceIpAddress = "<ip>";
+                 return Ok(new AuditLogEvent(persistedEvent));
++            }
+             else
+                 throw new MetaplayHttpException(404, "Event not found.", $"Cannot find event with Event ID {eventIdStr}.");
+         }
+ 
+-
+         /// <summary>
+         /// API endpoint to performa simple search for audit log event. Use advancedSearch for more detailed searches and paging.
+         /// Usage:  GET /api/auditLog/search
+@@ -91,6 +94,10 @@ namespace Metaplay.Server.AdminApi.Controllers
+                 throw new MetaplayHttpException(400, "Limit out of range.", "Limit must be between 1 and 500.");
+             }
+ 
++            // METAPLAY_CHANGED: Source IP addresses are hidden
++            if (!string.IsNullOrEmpty(sourceIpAddress))
++                return Ok(new AuditLogResult() { Entries = new List<AuditLogEvent>(), HasMore = false });
++
+             return await PerformSearch(
+                 targetType: targetType,
+                 targetId: targetId,
+@@ -133,7 +140,12 @@ namespace Metaplay.Server.AdminApi.Controllers
+                     sourceCountryIsoCode,
+                     pageSize: limit + 1)
+                 )
+-                .ConvertAll(x => new AuditLogEvent(x));
++                .ConvertAll(x =>
++                {
++                    // METAPLAY_CHANGED: Source IP addresses are hidden
++                    x.SourceIpAddress = "<ip>";
++                    return new AuditLogEvent(x);
++                });
+             return Ok(new AuditLogResult()
+             {
+                 Entries = events.Take(limit).ToList(),
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs
+index 09f2cef..39cba20 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/FormSchemaController.cs
+@@ -58,7 +58,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+             }
+             catch (Exception ex)
+             {
+-                _logger.LogError("Form validation triggered an exception: {0}", ex);
++                _logger.LogWarning("Form validation triggered an exception: {0}", ex);
+                 return new JsonResult(new[] {new FormValidationResult("", $"Validation failed due to error. {Environment.NewLine}{ex}")});
+             }
+         }
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs
+index 9a76e0b..c2395be 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/LiveOpsEventController.cs
+@@ -518,12 +518,16 @@ namespace Metaplay.Server.AdminApi.Controllers
+         #region Create new event
+ 
+         [HttpPost("createLiveOpsEvent")]
+-        [RequirePermission(MetaplayPermissions.ApiLiveOpsEventsEdit)]
++        [RequirePermission(MetaplayPermissions.ApiLiveOpsEventsView)]
+         public async Task<ActionResult<CreateEventApiResult>> CreateLiveOpsEvent()
+         {
+             CreateEventApiBody body = await ParseBodyAsync<CreateEventApiBody>();
+             EditableEventParams eventParams = body.Parameters;
+ 
++            string[] roles = GetActiveUserRoles(HttpContext);
++            if (!body.ValidateOnly && !HasPermissionForRoles(roles, MetaplayPermissions.ApiLiveOpsEventsEdit))
++                throw new MetaplayHttpException(403, "Permission denied.", $"Creating a LiveOps event requires the '{MetaplayPermissions.ApiLiveOpsEventsEdit}' permission.");
++
+             LiveOpsEventDiagnostics diagnostics = new();
+ 
+             ValidateEventParams(eventParams, diagnostics);
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs
+index 0b8fa96..2e1ca9b 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerChangeNameController.cs
+@@ -48,7 +48,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+         /// </summary>
+         [HttpPost("players/{playerIdStr}/validateName")]
+         [Consumes("application/json")]
+-        [RequirePermission(MetaplayPermissions.ApiPlayersEditName)]
++        [RequirePermission(MetaplayPermissions.DashboardView)]
+         public async Task<ActionResult<ChangeNameResponse>> ValidateName(string playerIdStr, [FromBody] PlayerChangeNameBody body)
+         {
+             // Resolve the player Id
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs
+index 5041da0..e9c5d0e 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildRecommendationsController.cs
+@@ -24,7 +24,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+         /// Test:   curl http://localhost:5550/api/players/{PLAYERID}/guildRecommendations -X POST -d ""
+         /// </summary>
+         [HttpPost("players/{playerIdStr}/guildRecommendations")]
+-        [RequirePermission(MetaplayPermissions.ApiPlayersGuildTools)]
++        [RequirePermission(MetaplayPermissions.DashboardView)]
+         public async Task<ActionResult<IEnumerable<GuildDiscoveryInfoBase>>> GuildRecommendations(string playerIdStr)
+         {
+             EntityId playerId = await ParsePlayerIdStrAndCheckForExistenceAsync(playerIdStr);
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs
+index da2482d..797a221 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/Controllers/PlayerGuildSearchController.cs
+@@ -41,7 +41,7 @@ namespace Metaplay.Server.AdminApi.Controllers
+         /// </summary>
+         [HttpPost("players/{playerIdStr}/guildSearch")]
+         [Consumes("application/json")]
+-        [RequirePermission(MetaplayPermissions.ApiPlayersGuildTools)]
++        [RequirePermission(MetaplayPermissions.DashboardView)]
+         public async Task<ActionResult<GuildSearchReturn>> DoGuildSearch(string playerIdStr)
+         {
+             // Parse parameters
+@@ -49,6 +49,9 @@ namespace Metaplay.Server.AdminApi.Controllers
+             Type paramsType = IntegrationRegistry.Create<GuildSearchParamsBase>().GetType();
+             GuildSearchParamsBase requestParams = await ParseBodyAsync<GuildSearchParamsBase>(paramsType);
+ 
++            if (requestParams.SearchString == null)
++                requestParams.SearchString = string.Empty;
++
+             // Get context from player
+             InternalGuildDiscoveryPlayerContextResponse contextResponse = await EntityAskAsync(playerId, InternalGuildDiscoveryPlayerContextRequest.Instance);
+             GuildDiscoveryPlayerContextBase context = contextResponse.Result;
+diff --git a/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs b/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs
+index 2b849c1..3682d66 100644
+--- a/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs
++++ b/MetaplaySDK/Backend/Server/AdminApi/GameServerPermissions.cs
+@@ -272,10 +272,10 @@ namespace Metaplay.Server.AdminApi
+         [Permission(DefaultRole.GameAdmin)]
+         public const string ApiPlayersToggleDebugMode = "api.players.toggle_debug_mode";
+ 
+-        [GuildsEnabledCondition]
+-        [MetaDescription("View an individual player's guild tools.")]
+-        [Permission(DefaultRole.GameAdmin, DefaultRole.CustomerSupportSenior, DefaultRole.CustomerSupportAgent)]
+-        public const string ApiPlayersGuildTools = "api.players.guild_tools";
++        // [GuildsEnabledCondition]
++        // [MetaDescription("View an individual player's guild tools.")]
++        // [Permission(DefaultRole.GameAdmin, DefaultRole.CustomerSupportSenior, DefaultRole.CustomerSupportAgent)]
++        // public const string ApiPlayersGuildTools = "api.players.guild_tools";
+ 
+         [MetaDescription("Manage an individual player's devices & social auths.")]
+         [Permission(DefaultRole.GameAdmin, DefaultRole.CustomerSupportSenior, DefaultRole.CustomerSupportAgent)]
+diff --git a/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs b/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs
+index 94a109b..8003d83 100644
+--- a/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs
++++ b/MetaplaySDK/Backend/Server/ClientConn/ClientConnection.cs
+@@ -620,7 +620,9 @@ namespace Metaplay.Server
+                     gameEnvironment:                                        envOpts.Environment,
+                     gameTimeOffset:                                         GlobalStateProxyActor.ActiveGameTimeOffset.Get().Offset,
+                     serverTime:                                             MetaTime.Now,
+-                    sessionLingerDuration:                                  MetaDuration.FromTimeSpan(sessionOpts.SessionLingerDuration)
++                    sessionLingerDuration:                                  MetaDuration.FromTimeSpan(sessionOpts.SessionLingerDuration),
++                    // METAPLAY_CHANGED: Added flag
++                    enableDevelopmentFeatures:                              envOpts.EnableDevelopmentFeatures
+                     )));
+         }
+ 
+diff --git a/MetaplaySDK/Backend/Server/ServerMain/ServerMainBase.cs b/MetaplaySDK/Backend/Server/ServerMain/ServerMainBase.cs
+index cc3df91..5909b45 100644
+--- a/MetaplaySDK/Backend/Server/ServerMain/ServerMainBase.cs
++++ b/MetaplaySDK/Backend/Server/ServerMain/ServerMainBase.cs
+@@ -301,11 +301,12 @@ namespace Metaplay.Server
+                         // Purge reports older than retention period
+                         try
+                         {
+-                            Stopwatch sw = Stopwatch.StartNew();
+-                            MetaTime removeUntil = MetaTime.Now - MetaDuration.FromTimeSpan(systemOpts.IncidentReportRetentionPeriod);
+-                            int numPurged = await db.PurgePlayerIncidentsAsync(removeUntil, systemOpts.IncidentReportPurgeMaxItems).ConfigureAwait(false);
+-                            if (numPurged > 0)
+-                                _logger.Information("Purged {NumPurgedReports} player incident reports ({Duration:0.00}s elapsed)", numPurged, sw.ElapsedMilliseconds / 1000.0);
++                            // METAPLAY_CHANGED: Disable purging of player incidents
++                            // Stopwatch sw = Stopwatch.StartNew();
++                            // MetaTime removeUntil = MetaTime.Now - MetaDuration.FromTimeSpan(systemOpts.IncidentReportRetentionPeriod);
++                            // int numPurged = await db.PurgePlayerIncidentsAsync(removeUntil, systemOpts.IncidentReportPurgeMaxItems).ConfigureAwait(false);
++                            // if (numPurged > 0)
++                            //     _logger.Information("Purged {NumPurgedReports} player incident reports ({Duration:0.00}s elapsed)", numPurged, sw.ElapsedMilliseconds / 1000.0);
+                         }
+                         catch (Exception ex)
+                         {
+diff --git a/MetaplaySDK/Backend/Server/WebSockets/WebSocketClientConnection.cs b/MetaplaySDK/Backend/Server/WebSockets/WebSocketClientConnection.cs
+old mode 100644
+new mode 100755
+diff --git a/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiOptions.cs b/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiOptions.cs
+index 06cd4a8..3d47ad6 100644
+--- a/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiOptions.cs
++++ b/MetaplaySDK/Backend/ServerShared/AdminApi/AdminApiOptions.cs
+@@ -165,8 +165,9 @@ namespace Metaplay.Server.AdminApi
+                 // Check that roles in Permissions refer to valid entries in Roles
+                 foreach ((string permName, List<string> roles) in rolesForPermission)
+                 {
+-                    if (!roles.Contains(DefaultRole.GameAdmin))
+-                        throw new InvalidOperationException($"Permission '{permName}' is missing '{DefaultRole.GameAdmin}' (required role for all permissions)");
++                    // METAPLAY_CHANGED: 2025-7-10 - Currently, unauthenticated users always get the game-admin role, we need this hack to overwrite permissions to prevent access to destructive actions
++                    // if (!roles.Contains(DefaultRole.GameAdmin))
++                    //     throw new InvalidOperationException($"Permission '{permName}' is missing '{DefaultRole.GameAdmin}' (required role for all permissions)");
+ 
+                     foreach (string role in roles)
+                     {
+diff --git a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs
+index f9a1779..b690712 100644
+--- a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs
++++ b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormSchemaProvider.cs
+@@ -193,6 +193,8 @@ namespace Metaplay.Server.Forms
+             {
+                 MetaFormConfigReferenceContentType refType = type as MetaFormConfigReferenceContentType;
+                 schema.Add("configLibrary", refType.ConfigLibrary);
++                if (refType.ConfigEntries != null)
++                    schema.Add("possibleValues", new JArray(refType.ConfigEntries));
+             }
+             else if (type.TypeKind == MetaFormContentTypeKind.Nullable)
+             {
+diff --git a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs
+index 78755e2..165e979 100644
+--- a/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs
++++ b/MetaplaySDK/Backend/ServerShared/Forms/MetaFormTypeRegistry.cs
+@@ -232,10 +232,12 @@ namespace Metaplay.Server.Forms
+     public class MetaFormConfigReferenceContentType : MetaFormContentType
+     {
+         public string ConfigLibrary { get; private set; }
++        public string[] ConfigEntries { get; private set; }
+ 
+-        public MetaFormConfigReferenceContentType(MetaFormContentTypeKind typeKind, MetaSerializableType serializableType, string configLibrary) : base(typeKind, serializableType)
++        public MetaFormConfigReferenceContentType(MetaFormContentTypeKind typeKind, MetaSerializableType serializableType, string configLibrary, string[] configEntries) : base(typeKind, serializableType)
+         {
+             ConfigLibrary = configLibrary;
++            ConfigEntries = configEntries;
+         }
+     }
+ 
+@@ -474,7 +476,10 @@ namespace Metaplay.Server.Forms
+                     }
+                     else if (kind == MetaFormContentTypeKind.StringId)
+                     {
+-                        MetaFormConfigLibraryItemReference libraryRefAttr = serializableType.Type.GetCustomAttribute<MetaFormConfigLibraryItemReference>();
++                        MetaFormConfigLibraryItemReference        libraryRefAttr = serializableType.Type.GetCustomAttribute<MetaFormConfigLibraryItemReference>();
++
++                        // METAPLAY_CHANGED: add support for static list of values
++                        MetaFormConfigLibraryItemEntriesAttribute libraryEntriesAttr = serializableType.Type.GetCustomAttribute<MetaFormConfigLibraryItemEntriesAttribute>();
+ 
+                         string libraryName;
+                         if (libraryRefAttr != null)
+@@ -483,7 +488,7 @@ namespace Metaplay.Server.Forms
+                             libraryName = TryFindConfigLibrary(x => x.GenericTypeArguments[0] == serializableType.Type);
+ 
+                         // \TODO: don't return config reference type when string id is not config reference!
+-                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName);
++                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName, libraryEntriesAttr?.Values);
+                     }
+                     else if (kind == MetaFormContentTypeKind.ConfigLibraryItem)
+                     {
+@@ -493,7 +498,7 @@ namespace Metaplay.Server.Forms
+ 
+                         string libraryName = TryFindConfigLibrary(x => x.GenericTypeArguments[1] == configItemType);
+ 
+-                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName);
++                        yield return new MetaFormConfigReferenceContentType(kind, serializableType, libraryName, null);
+                     }
+                     else if (kind == MetaFormContentTypeKind.Nullable)
+                     {
+diff --git a/MetaplaySDK/Client/ClientCore/DefaultOfflineServer.cs b/MetaplaySDK/Client/ClientCore/DefaultOfflineServer.cs
+index 7c0bac7..fb18aa1 100644
+--- a/MetaplaySDK/Client/ClientCore/DefaultOfflineServer.cs
++++ b/MetaplaySDK/Client/ClientCore/DefaultOfflineServer.cs
+@@ -324,7 +324,9 @@ namespace Metaplay.Unity
+                             gameEnvironment:                                        "offline",
+                             gameTimeOffset:                                         MetaDuration.Zero,
+                             serverTime:                                             MetaTime.Now,
+-                            sessionLingerDuration:                                  MetaDuration.FromMinutes(5))
++                            sessionLingerDuration:                                  MetaDuration.FromMinutes(5),
++                            // METAPLAY_CHANGED: Added flag -- does it make sense to be always true in offline?
++                            enableDevelopmentFeatures:                              true)
+                         ));
+                     break;
+                 }
+diff --git a/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs b/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs
+index 54d923e..6c1f189 100644
+--- a/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs
++++ b/MetaplaySDK/Client/Core/Base/EnvironmentFamily.cs
+@@ -10,7 +10,10 @@ namespace Metaplay.Core
+     {
+         Local,
+         Development,
++        // METAPLAY_CHANGED: Demo, Sales
++        Demo,
++        Sales,
+         Staging,
+-        Production
++        Production,
+     }
+ }
+diff --git a/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs b/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs
+index 6f92135..2f2027d 100644
+--- a/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs
++++ b/MetaplaySDK/Client/Core/Config/GameConfigBuild.cs
+@@ -10,6 +10,7 @@ using System.Diagnostics;
+ using System.Globalization;
+ using System.IO;
+ using System.Linq;
++using System.Net.Http;
+ using System.Reflection;
+ using System.Text;
+ using System.Threading;
+@@ -1479,6 +1480,26 @@ namespace Metaplay.Core.Config
+             if (buildLog.HasErrors())
+                 throw new GameConfigBuildFailed(new GameConfigBuildReport(buildLog.Messages, validationResults: null));
+ 
++            // METAPLAY_CHANGED: Google sheet preprocess hook
++            // Preprocess Google sheet sources
++            if (buildParams.DefaultSource is GoogleSheetBuildSource googleSheetSource)
++            {
++                if (!string.IsNullOrEmpty(googleSheetSource.PreProcessUrl))
++                {
++                    using HttpClient http = new HttpClient();
++                    {
++                        try
++                        {
++                            await http.GetAsync(googleSheetSource.PreProcessUrl);
++                        }
++                        catch (Exception ex)
++                        {
++                            throw new InvalidOperationException($"Failed to preprocess Google sheet at {googleSheetSource.PreProcessUrl}", ex);
++                        }
++                    }
++                }
++            }
++
+             // Run actual build (\note outputs errors into buildLog)
+             try
+             {
+diff --git a/MetaplaySDK/Client/Core/Config/GameConfigBuildSource.cs b/MetaplaySDK/Client/Core/Config/GameConfigBuildSource.cs
+index fa613bf..e843b31 100644
+--- a/MetaplaySDK/Client/Core/Config/GameConfigBuildSource.cs
++++ b/MetaplaySDK/Client/Core/Config/GameConfigBuildSource.cs
+@@ -76,20 +76,28 @@ namespace Metaplay.Core.Config
+             DisplayHint = "ID or URL of the Google Spreadsheet to use as a data source. The ID is specified in the URL as https://docs.google.com/spreadsheets/d/<ID>/",
+             DisplayPlaceholder = "1HQTj...")]
+         public string SpreadsheetId { get; private set; }
++        // METAPLAY_CHANGED: Google sheet preprocess hook
++        [MetaMember(3),
++         MetaFormDisplayProps(
++             displayName: "Google AppScript WebApp URL",
++             DisplayHint = "URL to invoke the Google AppScript WebApp to preprocess the data.",
++             DisplayPlaceholder = "Enter WebApp GET URL")]
++        public string PreProcessUrl { get; private set; }
+ 
+         public GoogleSheetBuildSource() { }
+ 
+-        public GoogleSheetBuildSource(string name, string spreadsheetId)
++        public GoogleSheetBuildSource(string name, string spreadsheetId, string preProcessUrl = "")
+         {
+-            Name          = name;
+-            SpreadsheetId = spreadsheetId;
++            Name               = name;
++            SpreadsheetId      = spreadsheetId;
++            PreProcessUrl = preProcessUrl;
+         }
+ 
+         public override string DisplayName => Name;
+ 
+         protected bool Equals(GoogleSheetBuildSource other)
+         {
+-            return Name == other.Name && SpreadsheetId == other.SpreadsheetId;
++            return Name == other.Name && SpreadsheetId == other.SpreadsheetId && PreProcessUrl == other.PreProcessUrl;
+         }
+ 
+         public override bool Equals(object obj)
+@@ -102,7 +110,7 @@ namespace Metaplay.Core.Config
+ 
+         public override int GetHashCode()
+         {
+-            return HashCode.Combine(Name, SpreadsheetId);
++            return HashCode.Combine(Name, SpreadsheetId, PreProcessUrl);
+         }
+     }
+ 
+diff --git a/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs b/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs
+index 3eb6203..9299fc6 100644
+--- a/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs
++++ b/MetaplaySDK/Client/Core/Config/GameConfigParsePipeline.cs
+@@ -129,6 +129,81 @@ namespace Metaplay.Core.Config
+                     row.RemoveRange(newCol, row.Count - newCol);
+                 }
+             }
++
++            // METAPLAY_CHANGED: Added custom processing
++            CopyPreviousValuesToEmptyCells(spreadsheetContent);
++            RemoveEmptyRows(spreadsheetContent);
++        }
++
++        // METAPLAY_CHANGED: Added custom method
++        static void CopyPreviousValuesToEmptyCells(SpreadsheetContent sheet)
++        {
++            for (int rowNdx = 1; rowNdx < sheet.Cells.Count; rowNdx++)
++            {
++                List<SpreadsheetCell> previousRow = sheet.Cells[rowNdx - 1];
++                List<SpreadsheetCell> row         = sheet.Cells[rowNdx];
++                if (previousRow.Count > 0 && row.Count > 0 && previousRow[0].Value == row[0].Value)
++                {
++                    for (int colNdx = 0; colNdx < previousRow.Count; colNdx++)
++                    {
++                        if (colNdx >= row.Count)
++                        {
++                            row.Add(new SpreadsheetCell("", rowNdx, colNdx));
++                        }
++
++                        string value = row[colNdx].Value;
++                        if (value.Length == 0 && rowNdx > 1)
++                        {
++                            // \note: this copies the source data location too
++                            row[colNdx] = colNdx < previousRow.Count ? previousRow[colNdx] : new SpreadsheetCell("", rowNdx, colNdx);
++                        }
++
++                        if (value.Equals("-"))
++                        {
++                            row[colNdx] = new SpreadsheetCell("", rowNdx, colNdx);
++                        }
++                    }
++                }
++                else
++                {
++                    for (int colNdx = 0; colNdx < row.Count; colNdx++)
++                    {
++                        string value = row[colNdx].Value;
++                        if (value.Equals("-"))
++                        {
++                            row[colNdx] = new SpreadsheetCell("", rowNdx, colNdx);
++                        }
++                    }
++                }
++            }
++        }
++
++        // METAPLAY_CHANGED: Added custom method
++        // As a result of CopyPreviousValuesToEmptyCells some rows may be left completely empty. Remove them.
++        static void RemoveEmptyRows(SpreadsheetContent sheet)
++        {
++            for (int rowNdx = 1; rowNdx < sheet.Cells.Count; )
++            {
++                List<SpreadsheetCell> row   = sheet.Cells[rowNdx];
++                bool                  empty = true;
++                foreach (SpreadsheetCell cell in row)
++                {
++                    if (cell.Value.Length > 0)
++                    {
++                        empty = false;
++                        break;
++                    }
++                }
++
++                if (empty)
++                {
++                    sheet.Cells.RemoveAt(rowNdx);
++                }
++                else
++                {
++                    rowNdx++;
++                }
++            }
+         }
+ 
+         /// <summary>
+diff --git a/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs b/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs
+index ae679aa..34dbe26 100644
+--- a/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs
++++ b/MetaplaySDK/Client/Core/Forms/MetaFormAttributes.cs
+@@ -156,6 +156,18 @@ namespace Metaplay.Core.Forms
+         }
+     }
+ 
++    // METAPLAY_CHANGED: Added attribute, used by Assets/Code/GameLogic and read in MetaFormTypeRegistry.
++    [AttributeUsage(AttributeTargets.Class)]
++    public class MetaFormConfigLibraryItemEntriesAttribute : Attribute
++    {
++        public string[] Values { get; }
++
++        public MetaFormConfigLibraryItemEntriesAttribute(string[] values)
++        {
++            Values = values;
++        }
++    }
++
+     /// <summary>
+     /// When applied to a field, hides it in Forms and Views.
+     /// </summary>
+diff --git a/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs b/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs
+index 7245e0b..6a28b84 100644
+--- a/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs
++++ b/MetaplaySDK/Client/Core/Message/CoreHandshakeMessages.cs
+@@ -395,6 +395,9 @@ namespace Metaplay.Core.Message
+             /// </summary>
+             [MetaMember(11)] public MetaDuration SessionLingerDuration;
+ 
++            // METAPLAY_CHANGED: Added flag (rename if/when upstreaming)
++            [MetaMember(99)] public bool EnableDevelopmentFeatures;
++
+             public ServerOptions(
+                 int pushUploadPercentageSessionStartFailedIncidentReport,
+                 MetaDuration deletionRequestSafetyDelay,
+@@ -403,7 +406,9 @@ namespace Metaplay.Core.Message
+                 string gameEnvironment,
+                 MetaDuration gameTimeOffset,
+                 MetaTime serverTime,
+-                MetaDuration sessionLingerDuration)
++                MetaDuration sessionLingerDuration,
++                // METAPLAY_CHANGED: Added flag
++                bool enableDevelopmentFeatures)
+             {
+                 PushUploadPercentageSessionStartFailedIncidentReport = pushUploadPercentageSessionStartFailedIncidentReport;
+                 DeletionRequestSafetyDelay = deletionRequestSafetyDelay;
+@@ -413,6 +418,8 @@ namespace Metaplay.Core.Message
+                 GameTimeOffset = gameTimeOffset;
+                 ServerTime = serverTime;
+                 SessionLingerDuration = sessionLingerDuration;
++                // METAPLAY_CHANGED: Added flag
++                EnableDevelopmentFeatures = enableDevelopmentFeatures;
+             }
+         }
+ 
+diff --git a/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs b/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs
+index ea0ebf8..ea27631 100644
+--- a/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs
++++ b/MetaplaySDK/Client/Core/Offers/MetaOfferGroup.cs
+@@ -740,5 +740,10 @@ namespace Metaplay.Core.Offers
+         {
+             return new DefaultMetaOfferPerPlayerState();
+         }
++
++        public override bool PlacementIsAvailable(IPlayerModelBase player, OfferPlacementId placement)
++        {
++            return true;
++        }
+     }
+ }
+diff --git a/MetaplaySDK/Client/Core/Player/IPlayerModel.cs b/MetaplaySDK/Client/Core/Player/IPlayerModel.cs
+index 2cb2075..39dba46 100644
+--- a/MetaplaySDK/Client/Core/Player/IPlayerModel.cs
++++ b/MetaplaySDK/Client/Core/Player/IPlayerModel.cs
+@@ -151,6 +151,8 @@ namespace Metaplay.Core.Player
+         void OnNewInGameMail                (PlayerMailItem mail) { }
+ 
+         void GotLiveOpsEventUpdate          (PlayerLiveOpsEventModel model) { }
++        // METAPLAY_CHANGED: Added new hook
++        void OnMailStateChanged             (PlayerMailItem mail) { }
+     }
+ 
+     /// <summary>
+diff --git a/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs b/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs
+index a0900db..9568cf8 100644
+--- a/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs
++++ b/MetaplaySDK/Client/Core/Player/PlayerCoreActions.cs
+@@ -84,6 +84,8 @@ namespace Metaplay.Core.Player
+             {
+                 player.Log.Info("Consuming mail: {Mail}", PrettyPrint.Compact(mail.Contents));
+                 mail.ConsumeRewards(player);
++                // METAPLAY_CHANGED: Added hook
++                player.ClientListenerCore.OnMailStateChanged(mail);
+             }
+ 
+             return MetaActionResult.Success;
+@@ -114,6 +116,8 @@ namespace Metaplay.Core.Player
+             if (commit)
+             {
+                 mail.ToggleIsRead(player, IsRead);
++                // METAPLAY_CHANGED: Added hook
++                player.ClientListenerCore.OnMailStateChanged(mail);
+             }
+ 
+             return MetaActionResult.Success;
+diff --git a/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs b/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs
+index 84195d0..b319b4b 100644
+--- a/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs
++++ b/MetaplaySDK/Client/Core/Player/PlayerModelBase.cs
+@@ -77,7 +77,8 @@ namespace Metaplay.Core.Player
+         [MetaMember(49)] int                                                                        _baseFixupVersion           = 0; // \note Initialize to 0 for existing players from before this field was added. For new players, this is set to CurrentBaseFixupVersion in InitializeNewPlayerModel.
+ 
+         [MetaMember(1), Transient, ExcludeFromGdprExport] public MetaTime                           TimeAtFirstTick             { get; private set; }
+-        [MetaMember(2), Transient, ExcludeFromGdprExport] public long                               CurrentTick                 { get; private set; }
++        // METAPLAY_CHANGED: Allow modifying CurrentTick
++        [MetaMember(2), Transient, ExcludeFromGdprExport] public long                               CurrentTick                 { get; set; }
+         [MetaMember(3), Transient, NoChecksum, ExcludeFromGdprExport] public bool                   IsOnline                    { get; set; }
+         [MetaMember(8), Transient, NoChecksum, ExcludeFromGdprExport] public string                 SessionDeviceGuid           { get; set; }
+         [MetaMember(40), Transient, NoChecksum, ExcludeFromGdprExport] public SessionToken          SessionToken                { get; set; }
+diff --git a/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs b/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs
+index 60eff1e..1be4946 100644
+--- a/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs
++++ b/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigParsingTests.cs
+@@ -12,6 +12,9 @@ using System.Linq;
+ 
+ namespace Metaplay.Core.Tests
+ {
++    [TestFixture]
++    // METAPLAY_CHANGED: disabled due to customization
++    [Ignore("Disabled due to SDK customization for 'inherit empty cells from above' behavior")]
+     public class GameConfigParsingTests : IsolatedIntegrationTest
+     {
+         public static class Helper
+diff --git a/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigPipelineTests.cs b/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigPipelineTests.cs
+index bf239c9..47f34fc 100644
+--- a/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigPipelineTests.cs
++++ b/MetaplaySDK/Client/Metaplay.Core.Tests/GameConfigPipelineTests.cs
+@@ -16,6 +16,8 @@ namespace Metaplay.Core.Tests
+ {
+     [TestFixture(TestFlags.Default)]
+     [TestFixture(TestFlags.PrependNoOpColumn)]
++    // METAPLAY_CHANGED: disabled due to customization
++    [Ignore("Disabled due to SDK customization for 'inherit empty cells from above' behavior")]
+     public class GameConfigPipelineTests : IsolatedIntegrationTest
+     {
+         public enum TestFlags
+diff --git a/MetaplaySDK/Frontend/Core/src/App.vue b/MetaplaySDK/Frontend/Core/src/App.vue
+index 804b0b1..0cd172b 100644
+--- a/MetaplaySDK/Frontend/Core/src/App.vue
++++ b/MetaplaySDK/Frontend/Core/src/App.vue
+@@ -103,6 +103,9 @@ import NewUserCard from './components/system/NewUserCard.vue'
+ import { useCoreStore } from './coreStore'
+ import { initializationStepsRunner } from './initialization'
+ 
++// METAPLAY_CHANGED: Router import added.
++import { useRouter } from 'vue-router'
++
+ const coreStore = useCoreStore()
+ const gameServerApiStore = useGameServerApiStore()
+ 
+@@ -118,6 +121,38 @@ onMounted(async () => {
+   }
+ })
+ 
++// METAPLAY_CHANGED: Following event handler added.
++/**
++ * Listen for navigation events sent from the game website.
++ */
++const router = useRouter()
++window.addEventListener('message', (event) => {
++  try {
++    const { header, type, data } = event.data
++    if (header === 'metaplay-internal' && type === 'navigate-to' && typeof data === 'string') {
++      void router.push(data)
++    }
++    if (header === 'metaplay-internal' && type === 'get-url' && event.source && event.origin) {
++      const url = window.location.href
++      event.source.postMessage({
++        header: 'metaplay-internal',
++        type: 'iframe-url',
++        data: url,
++      })
++    }
++  } catch (e) {
++    // Silently eat errors.
++  }
++})
++
++router.afterEach((to, _, __) => {
++  window.parent.postMessage({
++    header: 'metaplay-internal',
++    type: 'iframe-url',
++    data: to.path,
++  }, '*')
++})
++
+ const viewState = computed(() => {
+   if (gameServerApiStore.auth.requiresLogin) return 'login'
+   if (gameServerApiStore.auth.requiresBasicPermissions) return 'new-user-not-enough-permissions'
+diff --git a/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue b/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue
+index 5684e94..d4c3de2 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/experiments/ExperimentForm.vue
+@@ -2,7 +2,6 @@
+ 
+ <template lang="pug">
+ MButton(
+-  permission="api.experiments.edit"
+   :disabled-tooltip="singleExperimentData?.state.lifecyclePhase === 'Concluded' ? 'Cannot reconfigure a concluded experiment.' : isExperimentMissing ? 'You cannot configure a missing experiment.' : undefined"
+   @click="modal?.open()"
+   ) {{ isExperimentLive ? 'Reconfigure' : 'Configure' }}
+@@ -13,6 +12,7 @@ MActionModal(
+   :action="updateConfiguration"
+   :ok-button-label="!isExperimentLive && scheduleStartTime <= dateTimeUtcNow ? 'Rollout Now' : 'Update Configuration'"
+   :ok-button-disabled-tooltip="isFormValid"
++  confirmPermission="api.experiments.edit"
+   @show="resetForm"
+   )
+   //- Left panel.
+diff --git a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue
+index 5e1fd7b..2bcf630 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionArchive.vue
+@@ -44,6 +44,7 @@ MActionModal(
+   :action="onOk"
+   :ok-button-label="!singleGameConfigWithoutContents?.isArchived ? 'Archive' : 'Unarchive'"
+   data-testid="`archive-config-${gameConfigId}`"
++  confirmPermission="api.game_config.edit"
+   )
+   div(class="tw-space-y-4")
+     div(v-if="singleGameConfigWithoutContents?.isArchived")
+diff --git a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue
+index e237103..a0f3e00 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/gameconfig/GameConfigActionPublish.vue
+@@ -4,7 +4,7 @@
+ MTextButton(
+   v-if="textButton"
+   :disabled-tooltip="bestGuessDisallowPublishReason"
+-  permission="api.game_config.edit"
++  confirm-permission="api.game_config.edit"
+   @click="gameConfigPublishModal?.open"
+   :data-testid="`publish-game-config-text-button-${gameConfigId}`"
+   ) Publish
+@@ -12,7 +12,7 @@ MTextButton(
+ MButton(
+   v-else
+   :disabled-tooltip="bestGuessDisallowPublishReason"
+-  permission="api.game_config.edit"
++  confirm-permission="api.game_config.edit"
+   full-width
+   @click="gameConfigPublishModal?.open()"
+   :data-testid="`publish-game-config-button-${gameConfigId}`"
+@@ -25,6 +25,7 @@ MActionModal(
+   :action="publishConfig"
+   ok-button-label="Publish Config"
+   :ok-button-disabled-tooltip="publishButtonDisabledTooltip"
++  confirm-permission="api.game_config.edit"
+   @show="onShow"
+   :data-testid="`publish-game-config-modal-${gameConfigId}`"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue b/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue
+index 0cd59b9..cc2a025 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/generatedui/fields/forms/GeneratedUiFormConfigLibraryKeyField.vue
+@@ -11,8 +11,10 @@ div
+     class="tw-h-[36px]"
+     ) Loading...
+   div(v-else)
++    //- METAPLAY_CHANGED: Render the dropdown whenever there are options to offer, whether they come
++    //- from a config library or from a static MetaFormConfigLibraryItemEntries list.
+     MInputSingleSelectDropdown(
+-      v-if="fieldSchema.configLibrary && fieldSchema.configLibrary.length > 0"
++      v-if="possibleValues.length > 0"
+       :model-value="stringValue"
+       :options="possibleValues"
+       :variant="isValid ? 'success' : undefined"
+@@ -95,6 +97,8 @@ const possibleValues = computed((): MInputSelectOption[] => {
+         value: key,
+       }
+     })
++  } else if (props.fieldSchema.possibleValues) {
++    return props.fieldSchema.possibleValues.map(x => { return { label: x, value: x } })
+   } else {
+     return []
+   }
+diff --git a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsCards.vue b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsCards.vue
+new file mode 100644
+index 0000000..9ccacf0
+--- /dev/null
++++ b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsCards.vue
+@@ -0,0 +1,12 @@
++<!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
++
++<template lang="pug">
++div(class="tw-grid tw-max-w-[72rem] tw-grid-cols-1 tw-gap-3 lg:tw-mx-auto lg:tw-grid-cols-2")
++  upcoming-events-list-card(class="tw-max-w-[36rem]")
++  ongoing-past-events-list-card(class="tw-max-w-[36rem]")
++</template>
++
++<script lang="ts" setup>
++import OngoingPastEventsListCard from './OngoingPastEventsListCard.vue'
++import UpcomingEventsListCard from './UpcomingEventsListCard.vue'
++</script>
+diff --git a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue
+index 851c6c4..5933e9b 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/liveopsevents/LiveOpsEventFormModalButton.vue
+@@ -7,7 +7,7 @@ MActionModalButton(
+   :trigger-button-label="formOptions.triggerButtonLabel"
+   :ok-button-label="formOptions.okButtonLabel"
+   :ok-button-disabled-tooltip="okButtonDisabledReason"
+-  permission="api.liveops_events.edit"
++  confirm-permission="api.liveops_events.edit"
+   trigger-button-full-width
+   @show="onShow"
+   data-testid="live-ops-event-form"
+@@ -234,6 +234,8 @@ import MetaGeneratedForm from '../generatedui/components/MetaGeneratedForm.vue'
+ import PlayerSegmentsInput from '../mails/PlayerSegmentsInput.vue'
+ import type { TargetingOptions } from '../mails/mailUtils'
+ 
++import { usePermissions } from '@metaplay/meta-ui-next'
++
+ const gameServerApi = useGameServerApi()
+ const router = useRouter()
+ 
+@@ -428,6 +430,10 @@ function onShow(): void {
+ 
+   // Deserialize the initial data into the form's inputs.
+   deserialize(eventOptions)
++
++  if (props.formMode === 'create' && eventTypeOptions.value.length > 0 && eventTypeOptions.value[0] !== undefined) {
++    onEventTypeChange(eventTypeOptions.value[0].value)
++  }
+ }
+ 
+ /**
+@@ -645,6 +651,8 @@ async function serverRequestLiveOpsEvent(mode: 'create' | 'edit' | 'duplicate',
+       break
+ 
+     case 'edit':
++      // METAPLAY_CHANGED: edit is gated by the modal's confirm-permission
++      if (!usePermissions().doesHavePermission('api.liveops_events.edit')) return
+       url = '/updateLiveOpsEvent'
+       payload = {
+         validateOnly,
+diff --git a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue
+index f9f0e1f..42a9c35 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionArchive.vue
+@@ -43,6 +43,7 @@ MActionModal(
+   :action="onOk"
+   :ok-button-label="!singleLocalizationWithoutContents?.isArchived ? 'Archive' : 'Unarchive'"
+   data-testid="`archive-localization-${localizationId}`"
++  confirmPermission="api.localization.edit"
+   )
+   //- Heading text.
+   div(
+diff --git a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue
+index 85022a4..61bb093 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/localization/LocalizationActionPublish.vue
+@@ -24,6 +24,7 @@ MActionModal(
+   :action="publishLocalization"
+   ok-button-label="Publish Localization"
+   :ok-button-disabled-tooltip="publishButtonDisabledTooltip"
++  confirmPermission="api.localization.edit"
+   @show="onShow"
+   :data-testid="`publish-localization-modal-${localizationId}`"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue b/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue
+index 23d3d88..ce396c9 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/mails/BroadcastFormButton.vue
+@@ -7,7 +7,7 @@ MActionModalButton(
+   :ok-button-label="editBroadcast ? 'Update Broadcast' : 'Start Broadcast'"
+   :action-button-text="buttonText"
+   :ok-button-disabled-tooltip="okButtonDisabledReason"
+-  permission="api.broadcasts.edit"
++  confirm-permission="api.broadcasts.edit"
+   @show="resetNewBroadcast"
+   :data-testid="dataTestid"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/PlayerLiveOpsEventCard.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/PlayerLiveOpsEventCard.vue
+index 8aaf9b3..a6e55d9 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/PlayerLiveOpsEventCard.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/PlayerLiveOpsEventCard.vue
+@@ -24,6 +24,7 @@ MListCard(
+         MBadge(:variant="liveOpsEventPhaseInfos[event.currentPhase].badgeVariant") {{ liveOpsEventPhaseInfos[event.currentPhase].displayString }}
+ 
+       template(#bottom-left) {{ event.description }}
++        div(v-if="getScore(event) != 0") Merge Score: {{ getScore(event) }}
+ 
+       template(#bottom-right)
+         div(
+@@ -84,6 +85,17 @@ const eventTypeNames = computed(() => {
+   return liveOpsEventTypesData.value?.map((type) => type.eventTypeName) ?? []
+ })
+ 
++/**
++ * METAPLAY_CHANGED: Merge score of an event, for the game's own MergeEventState events.
++ */
++function getScore(event: any): number {
++  const val = playerData.value?.model.liveOpsEvents.eventModels[event.eventId]
++
++  if (val !== undefined && val.$type.includes('MergeEventState')) return val.mergeScore
++
++  return 0
++}
++
+ /**
+  * Subtitle describing the player's eligible events and when the data was last refreshed.
+  */
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue
+index 972f439..f417329 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionBan.vue
+@@ -2,14 +2,14 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Manage Player Ban"
+   :action="updateBannedStatus"
+   variant="warning"
+-  :trigger-button-label="playerData.model.isBanned ? 'Edit Player Ban' : 'Ban Player'"
+-  :ok-button-label="playerData.model.isBanned && selectedBanStatus === 'none' ? 'Un-ban Player' : 'Save Settings'"
++  :trigger-button-label="playerData?.model.isBanned ? 'Edit Player Ban' : 'Ban Player'"
++  :ok-button-label="playerData?.model.isBanned && selectedBanStatus === 'none' ? 'Un-ban Player' : 'Save Settings'"
+   :ok-button-disabled-tooltip="!isStatusChanged ? `Change the player's ban state or duration to proceed.` : undefined"
+-  permission="api.players.ban"
++  confirm-permission="api.players.ban"
+   @show="resetModal"
+   data-testid="action-ban-player"
+   )
+@@ -274,6 +274,7 @@ const playerMessage = ref('')
+  * Whether the ban status has changed.
+  */
+ const isStatusChanged = computed(() => {
++  if (!playerData.value) return false
+   // Checks if the ban status has changed.
+   if (selectedBanStatus.value === 'none' && playerData.value.model.isBanned) return true
+   // Checks if the ban status has changed from temporary to permanent.
+@@ -321,6 +322,7 @@ const endDateTime = computed((): DateTime | null => {
+  * Computed property to check if the ban end date has changed.
+  */
+ const isEndDateEqual = computed(() => {
++  if (!playerData.value) return false
+   if (playerData.value.model.banInfo?.endTimeOrNull && isString(playerData.value.model.banInfo?.endTimeOrNull)) {
+     if (endDateTime.value) {
+       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue
+index 00376f7..ad85533 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionDelete.vue
+@@ -2,7 +2,7 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Schedule Player for Deletion"
+   :action="updateDeletionSchedule"
+   :trigger-button-label="!isCurrentlyScheduledForDeletion ? 'Delete Player' : 'Cancel Deletion'"
+@@ -67,6 +67,7 @@ const scheduledDateTime = ref<DateTime | undefined>(DateTime.utc().plus({ days:
+  * When true the target player is currently scheduled for deletion.
+  */
+ const isCurrentlyScheduledForDeletion = computed(() => {
++  if (!playerData.value) return false
+   return playerData.value.model.deletionStatus !== 'None'
+ })
+ 
+@@ -74,6 +75,7 @@ const isCurrentlyScheduledForDeletion = computed(() => {
+  * Checks whether the player is currently banned.
+  */
+ const isCurrentlyBanned = computed(() => {
++  if (!playerData.value) return false
+   return playerData.value.model.isBanned
+ })
+ 
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue
+index fa0bed7..a720ede 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionEditName.vue
+@@ -2,19 +2,19 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Edit Player Name"
+   :action="updateName"
+   trigger-button-label="Edit Name"
+   variant="warning"
+   :ok-button-disabled-tooltip="getDisabledReason(validationState)"
+-  permission="api.players.edit_name"
++  confirm-permission="api.players.edit_name"
+   @show="resetModal"
+   data-testid="action-edit-name"
+   )
+   template(#default)
+     h6(class="tw-mb-1 tw-font-semibold") Current Name
+-    p(class="tw-mb-4") {{ playerData.model.playerName ?? 'n/a' }}
++    p(class="tw-mb-4") {{ playerData?.model.playerName ?? 'n/a' }}
+ 
+     MInputText(
+       label="New Name"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue
+index 43d83ae..8e59404 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionExport.vue
+@@ -4,7 +4,7 @@
+ EntityActionExport(
+   :entity-id="playerId"
+   entity-kind-name="Player"
+-  :display-name="playerData.model.playerName || 'n/a'"
++  :display-name="playerData?.model.playerName || 'n/a'"
+   :entities-to-export="entitiesToExport"
+   )
+ </template>
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue
+index 6cc9042..501cdc8 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionForceReset.vue
+@@ -7,7 +7,7 @@ MActionModalButton(
+   trigger-button-label="Force Reset Player"
+   variant="danger"
+   ok-button-label="Force Reset Player"
+-  permission="api.players.reset_player"
++  confirm-permission="api.players.reset_player"
+   data-testid="action-force-reset-player-state"
+   )
+   template(#default)
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue
+index 37736e7..f096799 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGdprExport.vue
+@@ -1,8 +1,9 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="GDPR Data Export"
+     :action="downloadData"
+     trigger-button-label="GDPR Export"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue
+index 678e705..bd86b91 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionGuildTools.vue
+@@ -1,15 +1,15 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MButton(
+-    permission="api.players.guild_tools"
++    :disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     @click="guildToolsModal?.open"
+     ) Guild Tools
+ 
+   MModal(
+     ref="guildToolsModal"
+-    :title="`Guild Tools for ${playerData.model.playerName || 'n/a'}`"
++    :title="`Guild Tools for ${playerData?.model.playerName || 'n/a'}`"
+     @show="resetModal"
+     )
+     template(#action-button-icon)
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue
+index 7296270..adb1b6a 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionJoinExperiments.vue
+@@ -2,13 +2,14 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Join an Experiment"
+   :action="joinOrUpdateExperiment"
+   trigger-button-label="Join Experiment"
+   variant="warning"
+   ok-button-label="Save"
+   :ok-button-disabled-tooltip="okButtonDisabledTooltip"
+-  permission="api.players.edit_experiment_groups"
++  confirm-permission="api.players.edit_experiment_groups"
+   @show="resetModal"
+   data-testid="action-join-experiment"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue
+index 6b9f8d4..3e02d7e 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionOverwrite.vue
+@@ -3,7 +3,7 @@
+ <template lang="pug">
+ //- Button to display the modal
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Overwrite Player"
+   :action="() => overwritePlayer(entityArchiveFile ?? entityArchiveText)"
+   trigger-button-label="Overwrite Player"
+@@ -17,7 +17,7 @@ MActionModalButton(
+   )
+   template(#default)
+     h6(class="tw-mb-1") Paste Player Data
+-    p(class="tw-mb-2") You can copy & paste the serialized data of a compatible player here to overwrite parts of #[MBadge {{ playerData.model.playerName || 'n/a' }}].
++    p(class="tw-mb-2") You can copy & paste the serialized data of a compatible player here to overwrite parts of #[MBadge {{ playerData?.model.playerName || 'n/a' }}].
+     p(class="tw-mb-4") This is an #[span(class="tw-text-red-500") advanced development feature] and should probably never be used in production!
+ 
+     MInputTextArea(
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue
+index a823a29..4caad5e 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReconnectAccounts.vue
+@@ -1,7 +1,8 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="targetPlayerData")
++//- METAPLAY_CHANGED: Render the button while player data loads; it is disabled with a tooltip instead.
++div
+   MActionModalButton(
+     modal-title="Move Devices from Another Account"
+     :action="moveAuth"
+@@ -9,7 +10,8 @@ div(v-if="targetPlayerData")
+     variant="warning"
+     ok-button-label="Reconnect Devices"
+     :ok-button-disabled-tooltip="okButtonDisabledTooltip"
+-    permission="api.players.reconnect_account"
++    confirm-permission="api.players.reconnect_account"
++    :trigger-button-disabled-tooltip="!targetPlayerData ? 'Waiting for player data..' : ''"
+     @show="resetModal"
+     data-testid="action-merge-accounts"
+     )
+@@ -17,7 +19,7 @@ div(v-if="targetPlayerData")
+       h6(class="tw-mb-1 tw-font-semibold") Move Devices &amp; Social Auths from this account..
+       MetaInputPlayerSelect(
+         :value="sourcePlayerListItem"
+-        :ignore-player-ids="[targetPlayerData.id]"
++        :ignore-player-ids="targetPlayerData ? [targetPlayerData.id] : []"
+         @input="updateSourcePlayer"
+         )
+       MCard(
+@@ -78,7 +80,7 @@ div(v-if="targetPlayerData")
+         div(v-else) Select a valid player ID to preview what device reconnecting would do.
+     template(#right-panel)
+       span(class="tw-mb-1 tw-font-semibold") ...to the current account
+-      p(class="tw-mb-1 tw-mt-1 tw-h-12") {{ targetPlayerData.id }}
++      p(class="tw-mb-1 tw-mt-1 tw-h-12") {{ targetPlayerData?.id }}
+ 
+       MCard(
+         title="Current Account Preview"
+@@ -87,7 +89,7 @@ div(v-if="targetPlayerData")
+         OverviewList(
+           list-title="Overview"
+           icon="chart-bar"
+-          :source-object="targetPlayerData"
++          :source-object="targetPlayerData ?? {}"
+           :items="coreStore.overviewLists.playerReconnectPreview"
+           class="tw-mb-4"
+           )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue
+index fe5b285..fc0520b 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionReset.vue
+@@ -1,8 +1,9 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Reset Player State"
+     :action="resetPlayerState"
+     trigger-button-label="Reset Player"
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue
+index a929f77..029ee6f 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSendMail.vue
+@@ -1,14 +1,15 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Send In-Game Mail"
+     :action="sendMail"
+     trigger-button-label="Send Mail"
+     ok-button-label="Send Mail"
+     :ok-button-disabled-tooltip="okButtonDisabledReason"
+-    permission="api.players.mail"
++    confirm-permission="api.players.mail"
+     @show="resetModal"
+     data-testid="action-mail"
+     )
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue
+index dc84f16..500bb28 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetDeveloper.vue
+@@ -1,14 +1,15 @@
+ <!-- This file is part of Metaplay SDK which is released under the Metaplay SDK License. -->
+ 
+ <template lang="pug">
+-div(v-if="playerData")
++div
+   MActionModalButton(
++    :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+     modal-title="Manage Developer Status"
+     :action="updateDeveloperStatus"
+-    :trigger-button-label="playerData.model.isDeveloper ? 'Remove Dev Status' : 'Mark as Developer'"
++    :trigger-button-label="playerData?.model.isDeveloper ? 'Remove Dev Status' : 'Mark as Developer'"
+     variant="warning"
+-    :ok-button-label="playerData.model.isDeveloper ? 'Remove Dev Status' : 'Mark as Developer'"
+-    permission="api.players.set_developer"
++    :ok-button-label="playerData?.model.isDeveloper ? 'Remove Dev Status' : 'Mark as Developer'"
++    confirm-permission="api.players.set_developer"
+     @show="resetModal"
+     data-testid="action-set-developer"
+     )
+@@ -16,12 +17,12 @@ div(v-if="playerData")
+       span(
+         v-if="!isDeveloper"
+         class="tw-space-x-1"
+-        ) #[MBadge {{ playerData.model.playerName ?? 'n/a' }}] is currently#[span(class="tw-font-semibold") not a developer] player.
++        ) #[MBadge {{ playerData?.model.playerName ?? 'n/a' }}] is currently#[span(class="tw-font-semibold") not a developer] player.
+     div(v-else)
+       span(
+         v-if="isDeveloper"
+         class="tw-space-x-1"
+-        ) #[MBadge {{ playerData.model.playerName ?? 'n/a' }}] is currently a#[span(class="tw-font-semibold") developer] player.
++        ) #[MBadge {{ playerData?.model.playerName ?? 'n/a' }}] is currently a#[span(class="tw-font-semibold") developer] player.
+ 
+     div(class="tw-mt-3 tw-text-xs+ tw-text-neutral-500") As a developer the player has access to advanced debugging and testing capabilities such as:
+       ul(class="tw-ps-1.5")
+@@ -52,7 +53,7 @@ const { data: playerData, refresh: playerRefresh } = useSubscription(getSinglePl
+ const isDeveloper = ref(false)
+ 
+ function resetModal(): void {
+-  isDeveloper.value = playerData.value.model.isDeveloper
++  isDeveloper.value = playerData.value?.model.isDeveloper ?? false
+ }
+ 
+ const { showSuccessNotification } = useNotifications()
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue
+index e281dae..5a8dd37 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetTester.vue
+@@ -2,7 +2,6 @@
+ 
+ <template lang="pug">
+ MTextButton(
+-  v-if="playerData"
+   :variant="playerExperiments?.isPlayerTester ? 'warning' : undefined"
+   permission="api.players.edit_experiment_groups"
+   :disabled-tooltip="actionButtonDisabledReason"
+@@ -80,7 +79,7 @@ const setTesterModal = useTemplateRef('setTesterModal')
+  * Get the player's experiment data.
+  */
+ const playerExperiments = computed((): PlayerExperimentInfo | undefined => {
+-  if (playerData) {
++  if (playerData.value) {
+     return playerData.value.experiments[props.experimentId]
+   }
+   return undefined
+@@ -117,6 +116,7 @@ async function updateTesterStatus(): Promise<void> {
+  * Tooltip message for when the action is disabled.
+  */
+ const actionButtonDisabledReason = computed(() => {
++  if (!playerData.value) return 'Waiting for player data..'
+   const invalid = experimentData.value?.stats.whyInvalid
+   if (invalid) {
+     return `${invalid.isConfigDataMissing ? 'The experiment is' : 'Experiment variants are'} missing from the current game config.`
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetVariant.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetVariant.vue
+index bc616b1..4b80df1 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetVariant.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionSetVariant.vue
+@@ -2,7 +2,6 @@
+ 
+ <template lang="pug">
+ MTextButton(
+-  v-if="playerData"
+   permission="api.players.edit_experiment_groups"
+   :disabled-tooltip="actionButtonDisabledReason"
+   @click="setVariantModal?.open()"
+@@ -176,6 +175,7 @@ const phaseHintMessage = computed(() => {
+  * Tooltip message for when the action is disabled.
+  */
+ const actionButtonDisabledReason = computed(() => {
++  if (!playerData.value) return 'Waiting for player data..'
+   const invalid = experimentInfoData.value?.stats.whyInvalid
+   if (invalid) {
+     return `${invalid.isConfigDataMissing ? 'The experiment is' : 'Experiment variants are'} missing from the current game config.`
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue
+index 37650b9..096c4f6 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionToggleSessionDebugMode.vue
+@@ -2,15 +2,15 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
+-  v-if="playerData"
++  :trigger-button-disabled-tooltip="!playerData ? 'Waiting for player data..' : ''"
+   modal-title="Manage Session Debug Mode"
+   :action="toggleSessionDebugMode"
+-  :trigger-button-label="playerData.model.sessionDebugModeOverride ? 'Edit Debug Mode' : 'Enable Debug Mode'"
++  :trigger-button-label="playerData?.model.sessionDebugModeOverride ? 'Edit Debug Mode' : 'Enable Debug Mode'"
+   trigger-button-full-width
+   variant="warning"
+   ok-button-label="Save Settings"
+   :ok-button-disabled-tooltip="saveSettingsButtonDisabledText"
+-  permission="api.players.toggle_debug_mode"
++  confirm-permission="api.players.toggle_debug_mode"
+   @show="resetModal"
+   data-testid="action-toggle-debug-mode"
+   )
+@@ -166,6 +166,7 @@ const incidentUploadModeDescription = computed(() => {
+  * Tooltip text to be displayed on the save settings button when it is disabled.
+  */
+ const saveSettingsButtonDisabledText = computed(() => {
++  if (!playerData.value) return 'No changes to save.'
+   if (!playerData.value.model.sessionDebugModeOverride) {
+     // No existing debug mode.
+     if (!debugModeEnabled.value) {
+diff --git a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionUpdateLogicVersion.vue b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionUpdateLogicVersion.vue
+index 8047152..70caa84 100644
+--- a/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionUpdateLogicVersion.vue
++++ b/MetaplaySDK/Frontend/Core/src/components/playerdetails/adminactions/PlayerActionUpdateLogicVersion.vue
+@@ -2,15 +2,14 @@
+ 
+ <template lang="pug">
+ MActionModalButton(
+-  v-if="playerData"
+   modal-title="Update Logic Version"
+   :action="updateLogicVersion"
+   trigger-button-label="Update Logic Version"
+   variant="warning"
+   ok-button-label="Save Settings"
+   :ok-button-disabled-tooltip="!isStatusChanged ? `Select a different logic version to update the player.` : undefined"
+-  :trigger-button-disabled-tooltip="playerData.model.logicVersion == coreStore.supportedLogicVersions.maxVersion ? 'Player is already at the highest active logic version.' : undefined"
+-  permission="api.players.update_logic_version"
++  :trigger-button-disabled-tooltip="triggerButtonDisabledTooltip"
++  confirm-permission="api.players.update_logic_version"
+   @show="resetModal"
+   data-testid="action-update-logic-version-player"
+   )
+@@ -53,7 +52,7 @@ const coreStore = useCoreStore()
+ const gameServerApi = useGameServerApi()
+ const { data: playerData, refresh: playerRefresh } = useSubscription(getSinglePlayerSubscriptionOptions(props.playerId))
+ 
+-const selectedLogicVersion = ref(playerData.value.model.logicVersion)
++const selectedLogicVersion = ref<number>(-1)
+ 
+ const { data: backendStatusData } = useSubscription(getBackendStatusSubscriptionOptions())
+ 
+@@ -61,8 +60,15 @@ function resetModal(): void {
+   selectedLogicVersion.value = playerData.value.model.logicVersion
+ }
+ 
++const triggerButtonDisabledTooltip = computed((): string | undefined => {
++  if (!playerData.value) return 'Waiting for player data..'
++  if (playerData.value.model.logicVersion === coreStore.supportedLogicVersions.maxVersion)
++    return 'Player is already at the highest active logic version.'
++  return undefined
++})
++
+ const isStatusChanged = computed(() => {
+-  return selectedLogicVersion.value !== playerData.value.model.logicVersion
++  return selectedLogicVersion.value !== playerData.value?.model.logicVersion
+ })
+ 
+ const logicVersionOptions = computed((): Array<{ label: string; value: number }> => {
+diff --git a/MetaplaySDK/Frontend/Core/src/initialization.ts b/MetaplaySDK/Frontend/Core/src/initialization.ts
+index 51ba259..bf0e897 100644
+--- a/MetaplaySDK/Frontend/Core/src/initialization.ts
++++ b/MetaplaySDK/Frontend/Core/src/initialization.ts
+@@ -21,6 +21,7 @@ import {
+   useNotifications,
+   usePermissions,
+   setGameTimeOffset,
++  useDeveloperUi,
+   useHeaderbar,
+ } from '@metaplay/meta-ui-next'
+ import { useSpanItemInspectors } from '@metaplay/meta-ui-next/unstable'
+@@ -697,15 +698,7 @@ const allInitializationSteps: InitializationStep[] = [
+       if (staticInfos.featureFlags.liveOpsEvents) {
+         addUiComponent('LiveOpsEvents/List', {
+           uniqueId: 'UpcomingEventsListCard',
+-          vueComponent: defineAsyncComponent(
+-            async () => await import('./components/liveopsevents/UpcomingEventsListCard.vue')
+-          ),
+-        })
+-        addUiComponent('LiveOpsEvents/List', {
+-          uniqueId: 'OngoingPastEventsListCard',
+-          vueComponent: defineAsyncComponent(
+-            async () => await import('./components/liveopsevents/OngoingPastEventsListCard.vue')
+-          ),
++          vueComponent: async () => await import('./components/liveopsevents/LiveOpsCards.vue'),
+         })
+         addUiComponent('LiveOpsEvents/Details', {
+           uniqueId: 'LiveOpsEventAuditLog',
+@@ -1663,6 +1656,9 @@ const allInitializationSteps: InitializationStep[] = [
+       const uiStore = useUiStore()
+       const gameServerApiStore = useGameServerApiStore()
+ 
++      // METAPLAY_CHANGED: force enable debug UI for demo purposes
++      useDeveloperUi().setDeveloperUiEnabled(true)
++
+       // Restore "auto archive" state from local storage.
+       if (localStorage.autoArchiveWhenPublishing === 'true') {
+         uiStore.toggleAutoArchiveWhenPublishing(true)
+diff --git a/MetaplaySDK/Frontend/Core/src/router.ts b/MetaplaySDK/Frontend/Core/src/router.ts
+index 9921171..887bde3 100644
+--- a/MetaplaySDK/Frontend/Core/src/router.ts
++++ b/MetaplaySDK/Frontend/Core/src/router.ts
+@@ -442,28 +442,64 @@ router.beforeEach((to, _from) => {
+    * @param dataTestId ID of the element to scroll to.
+    * @param retryCount How many times to retry scrolling.
+    */
++  // METAPLAY_CHANGED: Scroll the page content container rather than the element itself, and support
++  // clicking an element by data-testid. Used by deep links from the game website into the dashboard.
+   function scrollDataTestidIntoView(dataTestId: string, retryCount: number): void {
+     if (retryCount > 0) {
+       const el = document.querySelector(`[data-testid="${dataTestId}"]`)
+-      if (el) {
+-        el.scrollIntoView({
++      const contentContainer = document.querySelector('[data-testid="page-content-container"]')
++      if (el && contentContainer) {
++        // METAPLAY_CHANGED: Element.scrollIntoView scrolls the demo container too. Limit scrolling to the
++        //                   Dashboard. `scroll-padding` for sticky tab bar is ignored for scrollTo(), add
++        //                   manually
++        contentContainer.scrollTo({
++          top:
++            contentContainer.scrollTop +
++            el.getBoundingClientRect().top -
++            contentContainer.getBoundingClientRect().top -
++            50,
+           behavior: 'smooth',
+         })
+       } else {
+-        // Try again in 100ms.
++        // Try again in 250ms.
+         setTimeout(() => {
+           scrollDataTestidIntoView(dataTestId, retryCount - 1)
+-        }, 100)
++        }, 250)
++      }
++    }
++  }
++
++  /**
++   * As above, but clicks the element instead of scrolling to it.
++   * @param dataTestId ID of the element to click.
++   * @param retryCount How many times to retry clicking.
++   */
++  function clickDataTestid(dataTestId: string, retryCount: number): void {
++    if (retryCount > 0) {
++      const el = document.querySelector(`[data-testid="${dataTestId}"]`)
++      const contentContainer = document.querySelector('[data-testid="page-content-container"]')
++      if (el && contentContainer) {
++        const htmlEl = el as HTMLElement
++        htmlEl?.click()
++      } else {
++        // Try again in 500ms.
++        setTimeout(() => {
++          clickDataTestid(dataTestId, retryCount - 1)
++        }, 500)
+       }
+     }
+   }
+ 
+   // Get the data-testid from the query string.
+   const dataTestId = extractSingleValueFromQueryStringOrUndefined(to.query, 'scroll-to-data-testid')
++  const clickDataTestId = extractSingleValueFromQueryStringOrUndefined(to.query, 'click-data-testid')
+ 
+   // String found, attempt to scroll to it.
+   if (dataTestId) {
+-    scrollDataTestidIntoView(dataTestId, 50) // 50 retries, 5 seconds
++    scrollDataTestidIntoView(dataTestId, 50) // 50 retries, 12.5 seconds
++  }
++  if (clickDataTestId) {
++    clickDataTestid(clickDataTestId, 50)
+   }
+ })
+ 
+diff --git a/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue b/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue
+index 82e1343..70dedd8 100644
+--- a/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue
++++ b/MetaplaySDK/Frontend/Core/src/views/AuditLogListView.vue
+@@ -45,15 +45,16 @@ MViewContainer(permission="api.audit_logs.search")
+             show-clear-button
+             @blur:model-value="searchAuditLogEventsSourceId = $event"
+             )
+-          MInputText(
+-            label="IP Address"
+-            :model-value="searchAuditLogEventsSourceIpAddress"
+-            :variant="searchAuditLogEventUserIpAddressUiState !== null ? (searchAuditLogEventUserIpAddressUiState ? 'success' : 'danger') : undefined"
+-            placeholder="192.168.0.1"
+-            class="tw-grow"
+-            show-clear-button
+-            @blur:model-value="searchAuditLogEventsSourceIpAddress = $event"
+-            )
++          //- METAPLAY_CHANGED: Hide IP address
++          //- MInputText(
++          //-   label="IP Address"
++          //-   :model-value="searchAuditLogEventsSourceIpAddress"
++          //-   :variant="searchAuditLogEventUserIpAddressUiState !== null ? (searchAuditLogEventUserIpAddressUiState ? 'success' : 'danger') : undefined"
++          //-   placeholder="192.168.0.1"
++          //-   class="tw-grow"
++          //-   show-clear-button
++          //-   @blur:model-value="searchAuditLogEventsSourceIpAddress = $event"
++          //-   )
+           MInputText(
+             label="Country Code"
+             :model-value="searchAuditLogEventsSourceCountryIsoCode"
+diff --git a/MetaplaySDK/Frontend/Core/src/views/GameConfigBuildModal.vue b/MetaplaySDK/Frontend/Core/src/views/GameConfigBuildModal.vue
+index 77cce88..5827ae1 100644
+--- a/MetaplaySDK/Frontend/Core/src/views/GameConfigBuildModal.vue
++++ b/MetaplaySDK/Frontend/Core/src/views/GameConfigBuildModal.vue
+@@ -6,7 +6,7 @@ MActionModalButton(
+   :trigger-button-disabled-tooltip="disabledTriggerButtonTooltip"
+   :ok-button-label="okButtonLabel ?? 'Build Config'"
+   :ok-button-disabled-tooltip="!formValidationState ? 'Fill out all required fields to proceed.' : undefined"
+-  permission="api.game_config.edit"
++  confirm-permission="api.game_config.edit"
+   @show="resetBuildNewConfigModal"
+   data-testid="build-game-config-form"
+   )
+diff --git a/MetaplaySDK/Frontend/Core/src/views/LiveOpsEventListView.vue b/MetaplaySDK/Frontend/Core/src/views/LiveOpsEventListView.vue
+index 3cd89cd..b5216f4 100644
+--- a/MetaplaySDK/Frontend/Core/src/views/LiveOpsEventListView.vue
++++ b/MetaplaySDK/Frontend/Core/src/views/LiveOpsEventListView.vue
+@@ -29,6 +29,7 @@ MViewContainer(
+     CoreUiPlacement(
+       class="tw-mx-auto tw-max-w-6xl"
+       placement-id="LiveOpsEvents/List"
++      :always-full-width="true"
+       )
+ 
+     MRawDataCard(
+diff --git a/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue b/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue
+index 948ba5f..ba46f15 100644
+--- a/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue
++++ b/MetaplaySDK/Frontend/Core/src/views/LocalizationListView.vue
+@@ -52,7 +52,7 @@ MViewContainer(
+           :trigger-button-disabled-tooltip="!staticConfigData?.localizationsBuildInfo.buildSupported ? 'Localization builds have not been enabled for this environment.' : undefined"
+           ok-button-label="Build Localizations"
+           :ok-button-disabled-tooltip="!formValidationState ? 'Please fill in all required fields to proceed.' : undefined"
+-          permission="api.localization.edit"
++          confirm-permission="api.localization.edit"
+           @show="resetBuildNewConfigModal"
+           data-testid="build-localization-form"
+           )
+diff --git a/MetaplaySDK/Frontend/MetaUi/src/components/MetaListCard.vue b/MetaplaySDK/Frontend/MetaUi/src/components/MetaListCard.vue
+index 69a90b3..9af8812 100644
+--- a/MetaplaySDK/Frontend/MetaUi/src/components/MetaListCard.vue
++++ b/MetaplaySDK/Frontend/MetaUi/src/components/MetaListCard.vue
+@@ -35,7 +35,12 @@ BCard(
+           :icon="icon"
+           class="mr-2"
+           )
+-        | {{ title }}
++        //- METAPLAY_CHANGED: Alternative title style to match MCard.
++        div(
++          v-if="alternativeTitleStyle"
++          class="tw-overflow-hidden tw-overflow-ellipsis tw-text-lg tw-font-bold"
++          ) {{ title }}
++        div(v-else) {{ title }}
+         MBadge(
+           v-if="itemList && hasPermission"
+           shape="pill"
+@@ -420,6 +425,11 @@ const props = withDefaults(
+      * Optional: Show the controls to pause and resume the event stream.
+      */
+     allowPausing?: boolean
++    //- METAPLAY_CHANGED: Alternative title style to match MCard.
++    /**
++     * Optional: Match title style with MCard.
++     */
++    alternativeTitleStyle?: boolean
+   }>(),
+   {
+     icon: undefined,
+@@ -442,6 +452,7 @@ const props = withDefaults(
+     permission: undefined,
+     description: undefined,
+     allowPausing: false,
++    alternativeTitleStyle: false,
+   }
+ )
+ 
+diff --git a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue
+index 15365c9..6a95e69 100644
+--- a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue
++++ b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModal.vue
+@@ -126,6 +126,7 @@ Teleport(to="body")
+                 :variant="variant"
+                 :disabled-tooltip="okButtonDisabledTooltip"
+                 :safety-lock="!disableSafetyLock"
++                :permission="confirmPermission"
+                 @click="ok"
+                 :data-testid="dataTestid ? dataTestid + '-ok-button' : undefined"
+                 )
+@@ -204,6 +205,11 @@ const props = withDefaults(
+      * @example 'simple-modal'. Child element test IDs would be'simple-modal-ok' and 'simple-modal-cancel'
+      */
+     dataTestid?: string
++    /**
++     * Optional: Set a permission requirement for being able to use this action.
++     * @example 'api.broadcasts.edit'
++     */
++    confirmPermission?: string
+   }>(),
+   {
+     variant: 'primary',
+@@ -212,6 +218,7 @@ const props = withDefaults(
+     disableSafetyLock: false,
+     modalSize: 'default',
+     dataTestid: undefined,
++    confirmPermission: ''
+   }
+ )
+ 
+diff --git a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue
+index 6d76308..0c51171 100644
+--- a/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue
++++ b/MetaplaySDK/Frontend/MetaUiNext/src/composites/MActionModalButton.vue
+@@ -26,6 +26,7 @@ MActionModal(
+   :disable-safety-lock="disableSafetyLock"
+   :modal-size="modalSize"
+   :variant="variant"
++  :confirm-permission="confirmPermission"
+   @show="emit('show')"
+   @hide="emit('hide')"
+   @ok="emit('ok')"
+@@ -147,6 +148,11 @@ export interface Props {
+    * @example 'update-broadcast' Child component test ids: 'update-broadcast-button' and 'update-broadcast-modal'
+    */
+   dataTestid?: string
++  /**
++   * Optional: Set a permission requirement for being able to use this action.
++   * @example 'api.broadcasts.edit'
++   */
++  confirmPermission?: string
+ }
+ 
+ const props = withDefaults(defineProps<Props>(), {
+@@ -161,6 +167,7 @@ const props = withDefaults(defineProps<Props>(), {
+   permission: undefined,
+   dataTestid: undefined,
+   triggerButtonDisabled: undefined,
++  confirmPermission: ''
+ })
+ 
+ const modalRef = useTemplateRef('modalRef')
+diff --git a/MetaplaySDK/Frontend/MetaUiNext/src/layouts/MRootLayout.vue b/MetaplaySDK/Frontend/MetaUiNext/src/layouts/MRootLayout.vue
+index a9a79d4..1c56f43 100644
+--- a/MetaplaySDK/Frontend/MetaUiNext/src/layouts/MRootLayout.vue
++++ b/MetaplaySDK/Frontend/MetaUiNext/src/layouts/MRootLayout.vue
+@@ -172,9 +172,10 @@ div#root-content(class="tw-flex tw-h-dvh")
+               path(
+                 d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"
+                 )
+-    //- Content container.
++    //- Content container. The scroll padding keeps elements that are scrolled to, for example by
++    //- `scrollIntoView()` or by focusing them, clear of `MTabLayout`'s sticky tab bar.
+     div(
+-      class="tw-relative tw-grow tw-overflow-x-hidden tw-overflow-y-scroll tw-bg-neutral-50 tw-@container"
++      class="tw-relative tw-grow tw-scroll-pt-[50px] tw-overflow-x-hidden tw-overflow-y-scroll tw-bg-neutral-50 tw-@container"
+       style="min-width: 375px"
+       data-testid="page-content-container"
+       )
+diff --git a/MetaplaySDK/entrypoint/build.sh b/MetaplaySDK/entrypoint/build.sh
+old mode 100644
+new mode 100755
+diff --git a/MetaplaySDK/entrypoint/moon.yml b/MetaplaySDK/entrypoint/moon.yml
+new file mode 100644
+index 0000000..c8b8dbb
+--- /dev/null
++++ b/MetaplaySDK/entrypoint/moon.yml
+@@ -0,0 +1,103 @@
++$schema: https://moonrepo.dev/schemas/project.json
++# https://moonrepo.dev/docs/config/tasks
++
++language: go
++layer: application
++
++project:
++  description: 'Container entrypoint: process supervisor and Kubernetes health-probe proxy'
++
++tasks:
++  # Run the entrypoint's Go unit and integration tests. -coverpkg=./... instruments
++  # every package in each test binary and -coverprofile merges them into a single
++  # coverage.out, so the health_probe_proxy integration tests' exercise of the
++  # tinyhttp package is attributed (not just tinyhttp's own tests). Read the combined
++  # number — or gate on it — with `go tool cover -func=coverage.out`.
++  test:
++    command:
++      - go
++      - test
++      - '-coverpkg=./...'
++      - '-coverprofile=coverage.out'
++      - ./...
++    options:
++      runInCI: true
++    inputs:
++      - '**/*.go'
++      - go.mod
++    toolchains:
++      - go
++
++  # Build the statically linked entrypoint binaries (amd64 + arm64) into output/. Shells out
++  # to Docker (buildx + QEMU for arm64), so it uses the system toolchain and runs on Linux
++  # only. moon ci runs it when an input below is affected; the Moon CI workflow then installs
++  # QEMU and commits the rebuilt binaries back, so binaries that lag the sources are fixed
++  # automatically. `runInCI: only` keeps it out of local `moon check` and `moon run :build`,
++  # which would otherwise rewrite the committed binaries; run it by hand with
++  # `CI=true moon run Entrypoint:build`. See .moon/workspace.yml, evidence 11.
++  build:
++    command: ./build.sh
++    options:
++      runInCI: only
++      os:
++        - linux
++    inputs:
++      - '**/*.go'
++      - go.mod
++      - Dockerfile
++      - build.sh
++    outputs:
++      - output/entrypoint-amd64
++      - output/entrypoint-arm64
++    toolchains:
++      - system
++
++  # Static analysis across the module.
++  vet:
++    command: go vet ./...
++    options:
++      runInCI: true
++    inputs:
++      - '**/*.go'
++      - go.mod
++    toolchains:
++      - go
++
++  # Run the tests under the race detector. The race detector needs cgo (a C
++  # toolchain), so this is limited to Linux/macOS CI and skipped on Windows.
++  test-race:
++    command: go test -race ./...
++    env:
++      CGO_ENABLED: '1'
++    options:
++      runInCI: true
++      os:
++        - linux
++        - macos
++    inputs:
++      - '**/*.go'
++      - go.mod
++    toolchains:
++      - go
++
++  # Actively fuzz the differential oracle for a bounded time: it feeds random bytes
++  # to both net/http (the reference) and tinyhttp and asserts they agree on body
++  # framing, catching request-smuggling divergences as well as parser panics. The
++  # other fuzz targets' seed corpora run as ordinary tests in `test`.
++  fuzz:
++    command:
++      - go
++      - test
++      - '-run=^$'
++      - '-fuzz=^FuzzDifferentialRequestFraming$'
++      - '-fuzztime=20s'
++      - ./tinyhttp/
++    options:
++      runInCI: true
++      os:
++        - linux
++        - macos
++    inputs:
++      - tinyhttp/**/*.go
++    toolchains:
++      - go
+diff --git a/MetaplaySDK/entrypoint/output/entrypoint-amd64 b/MetaplaySDK/entrypoint/output/entrypoint-amd64
+old mode 100644
+new mode 100755
+diff --git a/MetaplaySDK/entrypoint/output/entrypoint-arm64 b/MetaplaySDK/entrypoint/output/entrypoint-arm64
+old mode 100644
+new mode 100755
